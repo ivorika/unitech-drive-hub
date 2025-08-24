@@ -1,14 +1,20 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, User, FileText, CreditCard, Phone, Mail, Calendar, MapPin } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const Signup = () => {
+  const { toast } = useToast();
+  const learnerPermitRef = useRef<HTMLInputElement>(null);
+  const profilePictureRef = useRef<HTMLInputElement>(null);
+  const paymentProofRef = useRef<HTMLInputElement>(null);
+  
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -23,9 +29,32 @@ const Signup = () => {
     lessonPackage: ""
   });
 
+  const [files, setFiles] = useState({
+    learnerPermit: null as File | null,
+    profilePicture: null as File | null,
+    paymentProof: null as File | null
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Application submitted:", formData);
+    
+    // Validate required files
+    if (!files.learnerPermit || !files.profilePicture || !files.paymentProof) {
+      toast({
+        title: "Missing Files",
+        description: "Please upload all required documents before submitting.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Here you would typically upload files and submit form data
+    console.log("Application submitted:", { formData, files });
+    
+    toast({
+      title: "Application Submitted",
+      description: "Your application has been submitted successfully. We'll review it shortly.",
+    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -33,6 +62,36 @@ const Signup = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+  const handleFileChange = (type: 'learnerPermit' | 'profilePicture' | 'paymentProof') => 
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        // Validate file size (max 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+          toast({
+            title: "File too large",
+            description: "Please select a file smaller than 2MB.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        setFiles(prev => ({
+          ...prev,
+          [type]: file
+        }));
+        
+        toast({
+          title: "File uploaded",
+          description: `${file.name} has been selected.`,
+        });
+      }
+    };
+
+  const triggerFileInput = (ref: React.RefObject<HTMLInputElement>) => {
+    ref.current?.click();
   };
 
   return (
@@ -181,25 +240,43 @@ const Signup = () => {
                 
                 <div className="space-y-2">
                   <Label>Learner's Permit Scan/Photo *</Label>
-                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+                  <div 
+                    className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                    onClick={() => triggerFileInput(learnerPermitRef)}
+                  >
                     <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">
-                      Click to upload or drag and drop<br />
+                      {files.learnerPermit ? files.learnerPermit.name : "Click to upload or drag and drop"}<br />
                       JPG, PNG (max 2MB)
                     </p>
-                    <Input type="file" className="hidden" accept=".jpg,.jpeg,.png" />
+                    <Input 
+                      ref={learnerPermitRef}
+                      type="file" 
+                      className="hidden" 
+                      accept=".jpg,.jpeg,.png"
+                      onChange={handleFileChange('learnerPermit')}
+                    />
                   </div>
                 </div>
                 
                 <div className="space-y-2">
                   <Label>Profile Picture *</Label>
-                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+                  <div 
+                    className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                    onClick={() => triggerFileInput(profilePictureRef)}
+                  >
                     <User className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">
-                      Upload your profile picture<br />
+                      {files.profilePicture ? files.profilePicture.name : "Upload your profile picture"}<br />
                       JPG, PNG (max 2MB)
                     </p>
-                    <Input type="file" className="hidden" accept=".jpg,.jpeg,.png" />
+                    <Input 
+                      ref={profilePictureRef}
+                      type="file" 
+                      className="hidden" 
+                      accept=".jpg,.jpeg,.png"
+                      onChange={handleFileChange('profilePicture')}
+                    />
                   </div>
                 </div>
               </CardContent>
@@ -243,13 +320,22 @@ const Signup = () => {
                 
                 <div className="space-y-2">
                   <Label>Proof of Payment *</Label>
-                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+                  <div 
+                    className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                    onClick={() => triggerFileInput(paymentProofRef)}
+                  >
                     <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">
-                      Upload payment receipt or screenshot<br />
+                      {files.paymentProof ? files.paymentProof.name : "Upload payment receipt or screenshot"}<br />
                       JPG, PNG, PDF (max 2MB)
                     </p>
-                    <Input type="file" className="hidden" accept=".jpg,.jpeg,.png,.pdf" />
+                    <Input 
+                      ref={paymentProofRef}
+                      type="file" 
+                      className="hidden" 
+                      accept=".jpg,.jpeg,.png,.pdf"
+                      onChange={handleFileChange('paymentProof')}
+                    />
                   </div>
                 </div>
               </CardContent>
