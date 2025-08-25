@@ -6,14 +6,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, User, FileText, CreditCard, Phone, Mail, Calendar, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const Signup = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const learnerPermitRef = useRef<HTMLInputElement>(null);
   const profilePictureRef = useRef<HTMLInputElement>(null);
   const paymentProofRef = useRef<HTMLInputElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
     firstName: "",
@@ -35,26 +39,102 @@ const Signup = () => {
     paymentProof: null as File | null
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate required files
-    if (!files.learnerPermit || !files.profilePicture || !files.paymentProof) {
-      toast({
-        title: "Missing Files",
-        description: "Please upload all required documents before submitting.",
-        variant: "destructive"
-      });
-      return;
+  const uploadFile = async (file: File, bucket: string, folder: string): Promise<string | null> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error("User not authenticated");
     }
 
-    // Here you would typically upload files and submit form data
-    console.log("Application submitted:", { formData, files });
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}/${folder}/${Date.now()}.${fileExt}`;
     
-    toast({
-      title: "Application Submitted",
-      description: "Your application has been submitted successfully. We'll review it shortly.",
-    });
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, file);
+
+    if (error) {
+      throw error;
+    }
+
+    return data.path;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      // Validate required files
+      if (!files.learnerPermit || !files.profilePicture || !files.paymentProof) {
+        toast({
+          title: "Missing Files",
+          description: "Please upload all required documents before submitting.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Check if user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign up and log in first to submit your application.",
+          variant: "destructive"
+        });
+        navigate('/login');
+        return;
+      }
+
+      // Upload files
+      const [learnerPermitPath, profilePicturePath, paymentProofPath] = await Promise.all([
+        uploadFile(files.learnerPermit, 'documents', 'learner-permits'),
+        uploadFile(files.profilePicture, 'profiles', 'profile-pictures'),
+        uploadFile(files.paymentProof, 'documents', 'payment-proofs')
+      ]);
+
+      // Insert student data
+      const { error: insertError } = await supabase
+        .from('students')
+        .insert({
+          user_id: user.id,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          date_of_birth: formData.dateOfBirth,
+          address: formData.address,
+          emergency_contact: formData.emergencyContact,
+          emergency_phone: formData.emergencyPhone,
+          learner_permit_number: formData.learnerPermitNumber,
+          learner_permit_url: learnerPermitPath,
+          profile_picture_url: profilePicturePath,
+          payment_proof_url: paymentProofPath,
+          registration_fee: formData.registrationFee,
+          lesson_package: formData.lessonPackage,
+          status: 'pending'
+        });
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      toast({
+        title: "Application Submitted",
+        description: "Your application has been submitted successfully. We'll review it shortly.",
+      });
+      
+      navigate('/student-dashboard');
+    } catch (error: any) {
+      console.error('Submission error:', error);
+      toast({
+        title: "Submission Failed",
+        description: error.message || "There was an error submitting your application. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -342,8 +422,8 @@ const Signup = () => {
             </Card>
 
             <div className="flex justify-center">
-              <Button type="submit" size="lg" className="w-full max-w-md">
-                Submit Application
+              <Button type="submit" size="lg" className="w-full max-w-md" disabled={isSubmitting}>
+                {isSubmitting ? "Submitting..." : "Submit Application"}
               </Button>
             </div>
           </form>

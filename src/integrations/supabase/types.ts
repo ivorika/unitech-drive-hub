@@ -14,7 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      students: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          date_of_birth: string | null
+          email: string
+          emergency_contact: string | null
+          emergency_phone: string | null
+          first_name: string
+          id: string
+          last_name: string
+          learner_permit_number: string | null
+          learner_permit_url: string | null
+          lesson_package: string | null
+          payment_proof_url: string | null
+          phone: string | null
+          profile_picture_url: string | null
+          registration_fee: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          email: string
+          emergency_contact?: string | null
+          emergency_phone?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          learner_permit_number?: string | null
+          learner_permit_url?: string | null
+          lesson_package?: string | null
+          payment_proof_url?: string | null
+          phone?: string | null
+          profile_picture_url?: string | null
+          registration_fee?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          email?: string
+          emergency_contact?: string | null
+          emergency_phone?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          learner_permit_number?: string | null
+          learner_permit_url?: string | null
+          lesson_package?: string | null
+          payment_proof_url?: string | null
+          phone?: string | null
+          profile_picture_url?: string | null
+          registration_fee?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
