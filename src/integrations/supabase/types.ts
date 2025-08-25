@@ -14,6 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
+      admins: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      instructors: {
+        Row: {
+          availability: Json | null
+          bio: string | null
+          created_at: string
+          email: string
+          first_name: string
+          hourly_rate: number | null
+          id: string
+          last_name: string
+          license_expiry_date: string | null
+          license_number: string | null
+          phone: string | null
+          profile_picture_url: string | null
+          specializations: string[] | null
+          status: string | null
+          updated_at: string
+          user_id: string
+          years_of_experience: number | null
+        }
+        Insert: {
+          availability?: Json | null
+          bio?: string | null
+          created_at?: string
+          email: string
+          first_name: string
+          hourly_rate?: number | null
+          id?: string
+          last_name: string
+          license_expiry_date?: string | null
+          license_number?: string | null
+          phone?: string | null
+          profile_picture_url?: string | null
+          specializations?: string[] | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+          years_of_experience?: number | null
+        }
+        Update: {
+          availability?: Json | null
+          bio?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string
+          hourly_rate?: number | null
+          id?: string
+          last_name?: string
+          license_expiry_date?: string | null
+          license_number?: string | null
+          phone?: string | null
+          profile_picture_url?: string | null
+          specializations?: string[] | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+          years_of_experience?: number | null
+        }
+        Relationships: []
+      }
       students: {
         Row: {
           address: string | null

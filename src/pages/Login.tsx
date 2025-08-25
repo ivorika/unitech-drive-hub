@@ -1,10 +1,13 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, User, GraduationCap, UserCheck } from "lucide-react";
+import { Shield, User, GraduationCap } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -13,10 +16,97 @@ const Login = () => {
     email: "",
     password: ""
   });
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent, userType: string) => {
+  const handleSubmit = async (e: React.FormEvent, userType: string) => {
     e.preventDefault();
-    console.log(`${userType} login attempt:`, loginData);
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginData.email,
+        password: loginData.password,
+      });
+
+      if (error) {
+        toast({
+          title: "Login failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data.user) {
+        // Check user role and redirect accordingly
+        const { data: profileData, error: profileError } = await checkUserRole(data.user.id, userType);
+        
+        if (profileError || !profileData) {
+          toast({
+            title: "Access denied",
+            description: `You don't have ${userType} access to this system.`,
+            variant: "destructive",
+          });
+          await supabase.auth.signOut();
+          return;
+        }
+
+        toast({
+          title: "Login successful",
+          description: `Welcome back!`,
+        });
+
+        // Redirect based on role
+        switch (userType) {
+          case "student":
+            navigate("/student-dashboard");
+            break;
+          case "instructor":
+            navigate("/instructor-dashboard");
+            break;
+          case "admin":
+            navigate("/admin-dashboard");
+            break;
+          default:
+            navigate("/");
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Login failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkUserRole = async (userId: string, expectedRole: string) => {
+    switch (expectedRole) {
+      case "student":
+        return await supabase
+          .from("students")
+          .select("*")
+          .eq("user_id", userId)
+          .single();
+      case "instructor":
+        return await supabase
+          .from("instructors")
+          .select("*")
+          .eq("user_id", userId)
+          .single();
+      case "admin":
+        return await supabase
+          .from("admins")
+          .select("*")
+          .eq("user_id", userId)
+          .single();
+      default:
+        return { data: null, error: new Error("Invalid role") };
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,8 +180,8 @@ const Login = () => {
                         required
                       />
                     </div>
-                    <Button type="submit" className="w-full">
-                      Login as Student
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? "Logging in..." : "Login as Student"}
                     </Button>
                   </form>
                 </CardContent>
@@ -133,8 +223,8 @@ const Login = () => {
                         required
                       />
                     </div>
-                    <Button type="submit" className="w-full">
-                      Login as Instructor
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? "Logging in..." : "Login as Instructor"}
                     </Button>
                   </form>
                 </CardContent>
@@ -176,8 +266,8 @@ const Login = () => {
                         required
                       />
                     </div>
-                    <Button type="submit" className="w-full">
-                      Login as Admin
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? "Logging in..." : "Login as Admin"}
                     </Button>
                   </form>
                 </CardContent>
