@@ -50,6 +50,50 @@ export type Database = {
         }
         Relationships: []
       }
+      announcements: {
+        Row: {
+          audience: string
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          message: string
+          priority: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          audience?: string
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          message: string
+          priority?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          audience?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          message?: string
+          priority?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       instructors: {
         Row: {
           availability: Json | null
@@ -110,6 +154,186 @@ export type Database = {
         }
         Relationships: []
       }
+      lesson_feedback: {
+        Row: {
+          areas_of_improvement: string | null
+          created_at: string
+          id: string
+          instructor_comments: string
+          instructor_id: string
+          lesson_id: string
+          performance_rating: string
+          ready_for_road_test: boolean | null
+          skills_practiced: string[] | null
+          student_id: string
+          student_progress: string | null
+          updated_at: string
+        }
+        Insert: {
+          areas_of_improvement?: string | null
+          created_at?: string
+          id?: string
+          instructor_comments: string
+          instructor_id: string
+          lesson_id: string
+          performance_rating: string
+          ready_for_road_test?: boolean | null
+          skills_practiced?: string[] | null
+          student_id: string
+          student_progress?: string | null
+          updated_at?: string
+        }
+        Update: {
+          areas_of_improvement?: string | null
+          created_at?: string
+          id?: string
+          instructor_comments?: string
+          instructor_id?: string
+          lesson_id?: string
+          performance_rating?: string
+          ready_for_road_test?: boolean | null
+          skills_practiced?: string[] | null
+          student_id?: string
+          student_progress?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_feedback_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_feedback_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_feedback_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lessons: {
+        Row: {
+          created_at: string
+          duration_minutes: number
+          feedback: string | null
+          id: string
+          instructor_id: string
+          lesson_date: string
+          lesson_time: string
+          lesson_type: string
+          notes: string | null
+          rating: number | null
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          duration_minutes?: number
+          feedback?: string | null
+          id?: string
+          instructor_id: string
+          lesson_date: string
+          lesson_time: string
+          lesson_type: string
+          notes?: string | null
+          rating?: number | null
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          duration_minutes?: number
+          feedback?: string | null
+          id?: string
+          instructor_id?: string
+          lesson_date?: string
+          lesson_time?: string
+          lesson_type?: string
+          notes?: string | null
+          rating?: number | null
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          payment_date: string | null
+          payment_method: string
+          payment_status: string
+          payment_type: string
+          student_id: string
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          payment_date?: string | null
+          payment_method: string
+          payment_status?: string
+          payment_type: string
+          student_id: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          payment_date?: string | null
+          payment_method?: string
+          payment_status?: string
+          payment_type?: string
+          student_id?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -136,6 +360,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      schedule_availability: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          instructor_id: string
+          is_available: boolean
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          instructor_id: string
+          is_available?: boolean
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          instructor_id?: string
+          is_available?: boolean
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_availability_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       students: {
         Row: {
