@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
@@ -16,7 +17,8 @@ const BasicSignup = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    role: "student"
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,9 +36,17 @@ const BasicSignup = () => {
     }
 
     try {
+      const redirectUrl = `${window.location.origin}/`;
+      
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            role: formData.role
+          }
+        }
       });
 
       if (error) {
@@ -45,7 +55,7 @@ const BasicSignup = () => {
 
       toast({
         title: "Account created successfully",
-        description: "Please check your email to confirm your account.",
+        description: "Please check your email to confirm your account, then sign in.",
       });
 
       navigate('/login');
@@ -127,6 +137,23 @@ const BasicSignup = () => {
                     required
                     placeholder="Confirm your password"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="role">I am a</Label>
+                  <Select 
+                    value={formData.role} 
+                    onValueChange={(value) => setFormData({ ...formData, role: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="student">Student</SelectItem>
+                      <SelectItem value="instructor">Instructor</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
