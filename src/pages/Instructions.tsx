@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { FileText, CreditCard, Clock, CheckCircle, AlertCircle, Info } from "lucide-react";
+import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -208,9 +209,9 @@ const Instructions = () => {
 
           <div className="text-center">
             <Button asChild size="lg">
-              <a href="/signup">
+              <Link to="/signup">
                 Ready to Apply? Start Your Application
-              </a>
+              </Link>
             </Button>
           </div>
         </div>

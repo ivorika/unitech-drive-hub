@@ -1,7 +1,21 @@
-import { Link } from "react-router-dom";
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Car, Mail, Phone, MapPin } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Footer = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleApplyClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!user) {
+      navigate("/login");
+    } else {
+      navigate("/application");
+    }
+  };
+
   return (
     <footer className="bg-primary text-primary-foreground">
       <div className="container py-12">
@@ -34,9 +48,9 @@ const Footer = () => {
               <Link to="/contact" className="block opacity-80 hover:opacity-100 transition-opacity">
                 Contact Support
               </Link>
-              <Link to="/signup" className="block opacity-80 hover:opacity-100 transition-opacity">
+              <a href="#" onClick={handleApplyClick} className="block opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
                 Apply Now
-              </Link>
+              </a>
             </div>
           </div>
 

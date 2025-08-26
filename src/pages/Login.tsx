@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,8 +17,16 @@ const Login = () => {
     password: ""
   });
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("student");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { userType } = useParams();
+
+  useEffect(() => {
+    if (userType && ["student", "instructor", "admin"].includes(userType)) {
+      setActiveTab(userType);
+    }
+  }, [userType]);
 
   const handleSubmit = async (e: React.FormEvent, userType: string) => {
     e.preventDefault();
@@ -129,7 +137,7 @@ const Login = () => {
             </p>
           </div>
 
-          <Tabs defaultValue="student" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="student" className="flex items-center gap-2">
                 <User className="h-4 w-4" />
@@ -279,7 +287,7 @@ const Login = () => {
             <p className="text-sm text-muted-foreground">
               New student?{" "}
               <a href="/signup" className="text-primary hover:underline">
-                Apply here
+                Sign Up
               </a>
             </p>
             <p className="text-sm text-muted-foreground">

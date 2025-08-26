@@ -283,7 +283,7 @@ const AdminDashboard = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="announcement-audience">Send To</Label>
-                  <select id="announcement-audience" className="w-full p-2 border rounded-md">
+                  <select id="announcement-audience" className="w-full p-2 border rounded-md" aria-label="Select announcement audience">
                     <option>All Users</option>
                     <option>Students Only</option>
                     <option>Instructors Only</option>
