@@ -36,7 +36,8 @@ const BasicSignup = () => {
     }
 
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      // Use the correct redirect URL for email confirmation
+      const redirectUrl = `${window.location.origin}/login`;
       
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
@@ -53,10 +54,17 @@ const BasicSignup = () => {
         throw error;
       }
 
-      toast({
-        title: "Account created successfully",
-        description: "Please check your email to confirm your account, then sign in.",
-      });
+      if (data.user && !data.user.email_confirmed_at) {
+        toast({
+          title: "Check your email",
+          description: "We've sent you a confirmation link. Please check your email and click the link to complete your registration.",
+        });
+      } else {
+        toast({
+          title: "Account created successfully",
+          description: "You can now sign in to your account.",
+        });
+      }
 
       navigate('/login');
     } catch (error: any) {
