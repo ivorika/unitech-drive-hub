@@ -36,8 +36,9 @@ const BasicSignup = () => {
     }
 
     try {
-      // Use the correct redirect URL for email confirmation
-      const redirectUrl = `${window.location.origin}/login`;
+      // Get the current domain for email redirect
+      const currentDomain = window.location.origin;
+      const redirectUrl = `${currentDomain}/login`;
       
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
@@ -54,10 +55,11 @@ const BasicSignup = () => {
         throw error;
       }
 
+      // Check if email confirmation is required
       if (data.user && !data.user.email_confirmed_at) {
         toast({
           title: "Check your email",
-          description: "We've sent you a confirmation link. Please check your email and click the link to complete your registration.",
+          description: "We've sent you a confirmation link. Please check your email and click the link to verify your account.",
         });
       } else {
         toast({
@@ -69,11 +71,27 @@ const BasicSignup = () => {
       navigate('/login');
     } catch (error: any) {
       console.error('Signup error:', error);
-      toast({
-        title: "Signup failed",
-        description: error.message || "There was an error creating your account. Please try again.",
-        variant: "destructive"
-      });
+      
+      // Handle specific error cases
+      if (error.message?.includes('User already registered')) {
+        toast({
+          title: "Account already exists",
+          description: "An account with this email already exists. Please sign in instead.",
+          variant: "destructive"
+        });
+      } else if (error.message?.includes('Invalid email')) {
+        toast({
+          title: "Invalid email",
+          description: "Please enter a valid email address.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Signup failed",
+          description: error.message || "There was an error creating your account. Please try again.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsLoading(false);
     }
