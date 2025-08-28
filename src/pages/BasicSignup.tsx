@@ -36,18 +36,12 @@ const BasicSignup = () => {
     }
 
     try {
-      // Get the current domain for email redirect
-      const currentDomain = window.location.origin;
-      const redirectUrl = `${currentDomain}/login`;
-      
+      const redirectUrl = `${window.location.origin}/confirm-email/${formData.email}`;
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            role: formData.role
-          }
+          emailRedirectTo: redirectUrl
         }
       });
 

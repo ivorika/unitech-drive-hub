@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import StudentDashboard from "./pages/StudentDashboard";
 import InstructorDashboard from "./pages/InstructorDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import ConfirmEmail from "./pages/ConfirmEmail";
 
 const queryClient = new QueryClient();
 
@@ -45,21 +46,10 @@ const App = () => (
             <Route path="/instructions" element={<Instructions />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
-            <Route path="/student-dashboard" element={
-              <ProtectedRoute allowedRoles={['student']}>
-                <StudentDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/instructor-dashboard" element={
-              <ProtectedRoute allowedRoles={['instructor']}>
-                <InstructorDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin-dashboard" element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            } />
+            <Route path="/student-dashboard" element={<StudentDashboard />} />
+            <Route path="/instructor-dashboard" element={<InstructorDashboard />} />
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
+            <Route path="/confirm-email/:userId" element={<ConfirmEmail />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
