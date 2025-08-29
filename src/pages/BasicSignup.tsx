@@ -55,14 +55,24 @@ const BasicSignup = () => {
           title: "Check your email",
           description: "We've sent you a confirmation link. Please check your email and click the link to verify your account.",
         });
+        // For students, redirect to student portal after email confirmation
+        if (formData.role === 'student') {
+          navigate('/student-portal');
+        } else {
+          navigate('/login');
+        }
       } else {
         toast({
           title: "Account created successfully",
           description: "You can now sign in to your account.",
         });
+        // For students, redirect to student portal
+        if (formData.role === 'student') {
+          navigate('/student-portal');
+        } else {
+          navigate('/login');
+        }
       }
-
-      navigate('/login');
     } catch (error: any) {
       console.error('Signup error:', error);
       

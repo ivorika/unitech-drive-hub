@@ -21,9 +21,19 @@ const ConfirmEmail = () => {
         if (session?.user) {
           setStatus('success');
           setMessage('Email confirmed successfully! You are now logged in.');
-          // Redirect to appropriate dashboard after a short delay
+          // Get user role to determine redirect
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('user_id', session.user.id)
+            .single();
+          
           setTimeout(() => {
-            navigate('/');
+            if (profile?.role === 'student') {
+              navigate('/student-portal');
+            } else {
+              navigate('/');
+            }
           }, 3000);
         } else {
           setStatus('error');

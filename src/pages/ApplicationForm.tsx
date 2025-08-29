@@ -124,7 +124,7 @@ const ApplicationForm = () => {
         description: "Your application has been submitted successfully. We'll review it shortly.",
       });
       
-      navigate('/student-dashboard');
+      navigate('/student-portal');
     } catch (error: any) {
       console.error('Submission error:', error);
       toast({
