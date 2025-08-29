@@ -173,12 +173,6 @@ const StudentDashboard = () => {
                     <span>Learner's Permit:</span>
                     <span>{student.learner_permit_number || 'Not provided'}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Status:</span>
-                    <Badge variant={student.status === 'active' ? 'default' : 'secondary'}>
-                      {student.status}
-                    </Badge>
-                  </div>
                 </div>
                 <Button variant="outline" size="sm" className="w-full" onClick={handleEditProfile}>
                   Edit Profile
