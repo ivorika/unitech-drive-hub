@@ -36,7 +36,7 @@ const BasicSignup = () => {
     }
 
     try {
-      const redirectUrl = `${window.location.origin}/confirm-email/${formData.email}`;
+      const redirectUrl = `${window.location.origin}/confirm-email`;
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
