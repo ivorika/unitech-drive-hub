@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
@@ -17,8 +17,7 @@ const BasicSignup = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    confirmPassword: "",
-    role: "student"
+    confirmPassword: ""
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,23 +54,15 @@ const BasicSignup = () => {
           title: "Check your email",
           description: "We've sent you a confirmation link. Please check your email and click the link to verify your account.",
         });
-        // For students, redirect to student portal after email confirmation
-        if (formData.role === 'student') {
-          navigate('/student-portal');
-        } else {
-          navigate('/login');
-        }
+        // All signups are students, redirect to student portal
+        navigate('/student-portal');
       } else {
         toast({
           title: "Account created successfully",
           description: "You can now sign in to your account.",
         });
-        // For students, redirect to student portal
-        if (formData.role === 'student') {
-          navigate('/student-portal');
-        } else {
-          navigate('/login');
-        }
+        // All signups are students, redirect to student portal
+        navigate('/student-portal');
       }
     } catch (error: any) {
       console.error('Signup error:', error);
@@ -117,7 +108,7 @@ const BasicSignup = () => {
           <div className="text-center space-y-4">
             <h1 className="text-3xl font-bold">Create Account</h1>
             <p className="text-muted-foreground">
-              Sign up to start your driving school application
+              Sign up as a new student to start your driving school application
             </p>
           </div>
 
@@ -169,22 +160,6 @@ const BasicSignup = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="role">I am a</Label>
-                  <Select 
-                    value={formData.role} 
-                    onValueChange={(value) => setFormData({ ...formData, role: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="student">Student</SelectItem>
-                      <SelectItem value="instructor">Instructor</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Creating account..." : "Create Account"}
