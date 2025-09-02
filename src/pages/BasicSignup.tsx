@@ -35,12 +35,18 @@ const BasicSignup = () => {
     }
 
     try {
-      const redirectUrl = `${window.location.origin}/confirm-email`;
+      // Use a more flexible redirect URL that works across devices
+      const baseUrl = window.location.origin;
+      const redirectUrl = `${baseUrl}/confirm-email`;
+      
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
-          emailRedirectTo: redirectUrl
+          emailRedirectTo: redirectUrl,
+          data: {
+            redirect_to: `${baseUrl}/student-portal`
+          }
         }
       });
 

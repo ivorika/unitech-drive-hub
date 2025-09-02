@@ -11,7 +11,52 @@ const ConfirmEmail = () => {
   useEffect(() => {
     const handleEmailConfirmation = async () => {
       try {
-        // Check if there's a session (user might be automatically logged in after confirmation)
+        // First, check URL parameters for auth tokens
+        const urlParams = new URLSearchParams(window.location.search);
+        const accessToken = urlParams.get('access_token');
+        const refreshToken = urlParams.get('refresh_token');
+        
+        if (accessToken && refreshToken) {
+          // Set the session using the tokens from the URL
+          const { data: { session }, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          
+          if (error) {
+            throw error;
+          }
+          
+          if (session?.user) {
+            setStatus('success');
+            setMessage('Email confirmed successfully! You are now logged in.');
+            
+            // Create profile if it doesn't exist (for new users)
+            const { data: existingProfile } = await supabase
+              .from('profiles')
+              .select('role')
+              .eq('user_id', session.user.id)
+              .single();
+            
+            if (!existingProfile) {
+              // Create student profile for new signups
+              await supabase
+                .from('profiles')
+                .insert({
+                  user_id: session.user.id,
+                  email: session.user.email,
+                  role: 'student'
+                });
+            }
+            
+            setTimeout(() => {
+              navigate('/student-portal');
+            }, 2000);
+            return;
+          }
+        }
+        
+        // Fallback: Check for existing session
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -21,6 +66,7 @@ const ConfirmEmail = () => {
         if (session?.user) {
           setStatus('success');
           setMessage('Email confirmed successfully! You are now logged in.');
+          
           // Get user role to determine redirect
           const { data: profile } = await supabase
             .from('profiles')
@@ -34,15 +80,15 @@ const ConfirmEmail = () => {
             } else {
               navigate('/');
             }
-          }, 3000);
+          }, 2000);
         } else {
           setStatus('error');
-          setMessage('Email confirmation failed. Please try logging in again.');
+          setMessage('Email confirmation failed. Please try logging in manually.');
         }
       } catch (error: any) {
         console.error('Email confirmation error:', error);
         setStatus('error');
-        setMessage(error.message || 'An error occurred during email confirmation.');
+        setMessage('Please try logging in manually to complete the verification process.');
       }
     };
 
