@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LogOut, User } from "lucide-react";
+import { Menu, X, LogOut, User, Car } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Header = () => {
@@ -36,6 +36,7 @@ const Header = () => {
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-2">
+          <Car className="h-8 w-8 text-primary" />
           <div className="flex flex-col">
             <span className="font-bold text-lg text-primary">DrDriver</span>
             <span className="text-xs text-muted-foreground">Unitech Driving School</span>
