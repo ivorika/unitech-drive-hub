@@ -75,8 +75,13 @@ const ConfirmEmail = () => {
             .single();
           
           setTimeout(() => {
+            // Always redirect students to student-portal for consistency
             if (profile?.role === 'student') {
               navigate('/student-portal');
+            } else if (profile?.role === 'instructor') {
+              navigate('/instructor-dashboard');
+            } else if (profile?.role === 'admin') {
+              navigate('/admin-dashboard');
             } else {
               navigate('/');
             }
