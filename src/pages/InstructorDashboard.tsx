@@ -4,10 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { User, Calendar, Clock, MessageSquare, Bell, Users, Star, FileText } from "lucide-react";
+import { EditProfileDialog } from "@/components/EditProfileDialog";
+import { useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const InstructorDashboard = () => {
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+  
   // Mock data - replace with real data from Supabase
   const instructor = {
     name: "Sarah Johnson",
@@ -37,6 +41,15 @@ const InstructorDashboard = () => {
     { date: "2024-01-12", title: "Schedule Update", message: "Please note the updated holiday schedule. Office closed Dec 25-26." },
     { date: "2024-01-10", title: "Training Session", message: "Mandatory safety training scheduled for Jan 20th at 2:00 PM." }
   ];
+
+  const handleEditProfile = () => {
+    setEditProfileOpen(true);
+  };
+
+  const handleProfileUpdate = () => {
+    // Trigger a re-fetch of data after profile update
+    window.location.reload();
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -92,7 +105,7 @@ const InstructorDashboard = () => {
                     ))}
                   </div>
                 </div>
-                <Button variant="outline" size="sm" className="w-full">
+                <Button variant="outline" size="sm" className="w-full" onClick={handleEditProfile}>
                   Edit Profile
                 </Button>
               </CardContent>
@@ -306,6 +319,14 @@ const InstructorDashboard = () => {
           </Card>
         </div>
       </main>
+      
+      <EditProfileDialog
+        open={editProfileOpen}
+        onOpenChange={setEditProfileOpen}
+        userType="instructor"
+        userData={instructor}
+        onProfileUpdate={handleProfileUpdate}
+      />
       
       <Footer />
     </div>

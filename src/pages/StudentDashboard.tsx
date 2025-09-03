@@ -5,6 +5,8 @@ import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { User, Calendar, Clock, MessageSquare, Bell, FileText, CheckCircle, Plus } from "lucide-react";
+import { EditProfileDialog } from "@/components/EditProfileDialog";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import Header from "@/components/Header";
@@ -49,11 +51,15 @@ const StudentDashboard = () => {
     navigate('/schedule-lesson');
   };
 
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+
   const handleEditProfile = () => {
-    toast({
-      title: "Feature coming soon",
-      description: "Profile editing will be available soon.",
-    });
+    setEditProfileOpen(true);
+  };
+
+  const handleProfileUpdate = () => {
+    // Trigger a re-fetch of data after profile update
+    window.location.reload();
   };
 
   const handleMessageInstructor = () => {
@@ -359,6 +365,14 @@ const StudentDashboard = () => {
           </Card>
         </div>
       </main>
+      
+      <EditProfileDialog
+        open={editProfileOpen}
+        onOpenChange={setEditProfileOpen}
+        userType="student"
+        userData={student}
+        onProfileUpdate={handleProfileUpdate}
+      />
       
       <Footer />
     </div>

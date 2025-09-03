@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { EditProfileDialog } from "@/components/EditProfileDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useDashboardData } from "@/hooks/use-dashboard-data";
 import { useUserRole } from "@/hooks/use-user-role";
