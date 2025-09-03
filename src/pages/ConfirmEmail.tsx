@@ -11,52 +11,108 @@ const ConfirmEmail = () => {
   useEffect(() => {
     const handleEmailConfirmation = async () => {
       try {
-        // First, check URL parameters for auth tokens
+        // Check URL parameters for auth tokens from email confirmation
         const urlParams = new URLSearchParams(window.location.search);
         const accessToken = urlParams.get('access_token');
         const refreshToken = urlParams.get('refresh_token');
+        const type = urlParams.get('type');
         
-        if (accessToken && refreshToken) {
-          // Set the session using the tokens from the URL
-          const { data: { session }, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-          
-          if (error) {
-            throw error;
-          }
-          
-          if (session?.user) {
-            setStatus('success');
-            setMessage('Email confirmed successfully! You are now logged in.');
+        // Handle token-based confirmation (works across devices)
+        if (accessToken && refreshToken && type === 'signup') {
+          try {
+            // Clear any existing session first to ensure clean state
+            await supabase.auth.signOut();
             
-            // Create profile if it doesn't exist (for new users)
-            const { data: existingProfile } = await supabase
-              .from('profiles')
-              .select('role')
-              .eq('user_id', session.user.id)
-              .single();
+            // Set the new session using tokens from the confirmation email
+            const { data: { session }, error: sessionError } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
             
-            if (!existingProfile) {
-              // Create student profile for new signups
-              await supabase
-                .from('profiles')
-                .insert({
-                  user_id: session.user.id,
-                  email: session.user.email,
-                  role: 'student'
-                });
+            if (sessionError) {
+              throw sessionError;
             }
             
-            setTimeout(() => {
-              navigate('/student-portal');
-            }, 2000);
-            return;
+            if (session?.user) {
+              setStatus('success');
+              setMessage('Email confirmed successfully! Your account is now verified.');
+              
+              // Create or update profile for confirmed user
+              const { data: existingProfile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('user_id', session.user.id)
+                .single();
+              
+              if (!existingProfile) {
+                // Create student profile for new signups
+                await supabase
+                  .from('profiles')
+                  .insert({
+                    user_id: session.user.id,
+                    email: session.user.email,
+                    role: 'student'
+                  });
+              }
+              
+              // Redirect after confirmation
+              setTimeout(() => {
+                navigate('/student-portal');
+              }, 2000);
+              return;
+            }
+          } catch (tokenError) {
+            console.error('Token-based confirmation failed:', tokenError);
+            // Fall through to alternative confirmation methods
           }
         }
         
-        // Fallback: Check for existing session
+        // Handle hash-based confirmation (backup method)
+        if (window.location.hash.includes('access_token')) {
+          try {
+            const { data: { session }, error: hashError } = await supabase.auth.getSession();
+            
+            if (hashError) {
+              throw hashError;
+            }
+            
+            if (session?.user) {
+              setStatus('success');
+              setMessage('Email confirmed successfully! You are now logged in.');
+              
+              // Get user role to determine redirect
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('user_id', session.user.id)
+                .single();
+              
+              setTimeout(() => {
+                if (profile?.role === 'student') {
+                  navigate('/student-portal');
+                } else if (profile?.role === 'instructor') {
+                  navigate('/instructor-dashboard');
+                } else if (profile?.role === 'admin') {
+                  navigate('/admin-dashboard');
+                } else {
+                  navigate('/student-portal'); // Default for new users
+                }
+              }, 2000);
+              return;
+            }
+          } catch (hashError) {
+            console.error('Hash-based confirmation failed:', hashError);
+          }
+        }
+        
+        // If no tokens in URL, this might be an invalid confirmation link
+        if (!accessToken && !refreshToken && !window.location.hash.includes('access_token')) {
+          setStatus('error');
+          setMessage('Invalid confirmation link. Please check your email for the correct link or try signing up again.');
+          return;
+        }
+        
+        // Final fallback - check for existing session
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -65,7 +121,7 @@ const ConfirmEmail = () => {
 
         if (session?.user) {
           setStatus('success');
-          setMessage('Email confirmed successfully! You are now logged in.');
+          setMessage('You are already logged in!');
           
           // Get user role to determine redirect
           const { data: profile } = await supabase
@@ -75,7 +131,6 @@ const ConfirmEmail = () => {
             .single();
           
           setTimeout(() => {
-            // Always redirect students to student-portal for consistency
             if (profile?.role === 'student') {
               navigate('/student-portal');
             } else if (profile?.role === 'instructor') {
@@ -88,12 +143,15 @@ const ConfirmEmail = () => {
           }, 2000);
         } else {
           setStatus('error');
-          setMessage('Email confirmation failed. Please try logging in manually.');
+          setMessage('Email confirmation failed. Please try logging in manually or sign up again if you haven\'t created an account yet.');
         }
       } catch (error: any) {
         console.error('Email confirmation error:', error);
         setStatus('error');
-        setMessage('Please try logging in manually to complete the verification process.');
+        setMessage(error.message?.includes('Invalid token') 
+          ? 'This confirmation link has expired or is invalid. Please request a new confirmation email.'
+          : 'Please try logging in manually to complete the verification process.'
+        );
       }
     };
 
