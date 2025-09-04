@@ -21,8 +21,10 @@ import {
   Settings,
   TrendingUp,
   Eye,
-  Loader2
+  Loader2,
+  X
 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
@@ -39,6 +41,8 @@ const AdminDashboard = () => {
   const [announcementMessage, setAnnouncementMessage] = useState("");
   const [announcementAudience, setAnnouncementAudience] = useState("all");
   const [processing, setProcessing] = useState<string | null>(null);
+  const [reviewingStudent, setReviewingStudent] = useState<any>(null);
+  const [reviewedStudents, setReviewedStudents] = useState<Set<string>>(new Set());
 
   // Get pending students
   const pendingStudents = students.filter(student => student.status === 'pending');
@@ -282,9 +286,17 @@ const AdminDashboard = () => {
                         <div className="flex space-x-2">
                           <Button 
                             size="sm" 
+                            variant="outline"
+                            onClick={() => setReviewingStudent(student)}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            Review
+                          </Button>
+                          <Button 
+                            size="sm" 
                             variant="default"
                             onClick={() => handleApproveStudent(student.id)}
-                            disabled={processing === `approve-${student.id}`}
+                            disabled={processing === `approve-${student.id}` || !reviewedStudents.has(student.id)}
                           >
                             {processing === `approve-${student.id}` ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
@@ -490,6 +502,119 @@ const AdminDashboard = () => {
       </main>
       
       <Footer />
+
+      {/* Student Review Dialog */}
+      <Dialog open={!!reviewingStudent} onOpenChange={() => setReviewingStudent(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle>Review Application</DialogTitle>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setReviewingStudent(null)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <DialogDescription>
+              Review student application details before approval
+            </DialogDescription>
+          </DialogHeader>
+          
+          {reviewingStudent && (
+            <div className="space-y-6">
+              <div className="flex items-center space-x-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={reviewingStudent.profile_picture_url} alt={`${reviewingStudent.first_name} ${reviewingStudent.last_name}`} />
+                  <AvatarFallback className="text-lg">{reviewingStudent.first_name[0]}{reviewingStudent.last_name[0]}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="text-xl font-semibold">{reviewingStudent.first_name} {reviewingStudent.last_name}</h3>
+                  <p className="text-muted-foreground">{reviewingStudent.email}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <Label className="font-medium">Contact Information</Label>
+                    <div className="mt-2 space-y-2">
+                      <p className="text-sm"><span className="font-medium">Phone:</span> {reviewingStudent.phone || 'Not provided'}</p>
+                      <p className="text-sm"><span className="font-medium">Address:</span> {reviewingStudent.address || 'Not provided'}</p>
+                      <p className="text-sm"><span className="font-medium">Date of Birth:</span> {reviewingStudent.date_of_birth ? new Date(reviewingStudent.date_of_birth).toLocaleDateString() : 'Not provided'}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="font-medium">Emergency Contact</Label>
+                    <div className="mt-2 space-y-2">
+                      <p className="text-sm"><span className="font-medium">Name:</span> {reviewingStudent.emergency_contact || 'Not provided'}</p>
+                      <p className="text-sm"><span className="font-medium">Phone:</span> {reviewingStudent.emergency_phone || 'Not provided'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <Label className="font-medium">License Information</Label>
+                    <div className="mt-2 space-y-2">
+                      <p className="text-sm"><span className="font-medium">Permit Number:</span> {reviewingStudent.learner_permit_number || 'Not provided'}</p>
+                      {reviewingStudent.learner_permit_url && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => window.open(reviewingStudent.learner_permit_url, '_blank')}
+                        >
+                          View Permit Document
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="font-medium">Payment Information</Label>
+                    <div className="mt-2 space-y-2">
+                      <p className="text-sm"><span className="font-medium">Registration Fee:</span> {reviewingStudent.registration_fee || 'Not provided'}</p>
+                      <p className="text-sm"><span className="font-medium">Lesson Package:</span> {reviewingStudent.lesson_package || 'Not provided'}</p>
+                      {reviewingStudent.payment_proof_url && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => window.open(reviewingStudent.payment_proof_url, '_blank')}
+                        >
+                          View Payment Proof
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setReviewingStudent(null)}
+                >
+                  Close
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setReviewedStudents(prev => new Set(prev).add(reviewingStudent.id));
+                    setReviewingStudent(null);
+                    toast({
+                      title: "Application Reviewed",
+                      description: "You can now approve this student's application.",
+                    });
+                  }}
+                >
+                  Mark as Reviewed
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
