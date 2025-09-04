@@ -1,17 +1,23 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, User, FileText, CreditCard } from "lucide-react";
+import { Upload, User, FileText, CreditCard, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
-const ApplicationForm = () => {
+interface ApplicationFormProps {
+  isEditing?: boolean;
+  existingData?: any;
+  onBack?: () => void;
+}
+
+const ApplicationForm = ({ isEditing = false, existingData, onBack }: ApplicationFormProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const learnerPermitRef = useRef<HTMLInputElement>(null);
@@ -32,6 +38,25 @@ const ApplicationForm = () => {
     registrationFee: "",
     lessonPackage: ""
   });
+
+  // Populate form data when editing
+  useEffect(() => {
+    if (isEditing && existingData) {
+      setFormData({
+        firstName: existingData.first_name || "",
+        lastName: existingData.last_name || "",
+        email: existingData.email || "",
+        phone: existingData.phone || "",
+        dateOfBirth: existingData.date_of_birth || "",
+        address: existingData.address || "",
+        emergencyContact: existingData.emergency_contact || "",
+        emergencyPhone: existingData.emergency_phone || "",
+        learnerPermitNumber: existingData.learner_permit_number || "",
+        registrationFee: existingData.registration_fee || "",
+        lessonPackage: existingData.lesson_package || ""
+      });
+    }
+  }, [isEditing, existingData]);
 
   const [files, setFiles] = useState({
     learnerPermit: null as File | null,
@@ -64,8 +89,8 @@ const ApplicationForm = () => {
     setIsSubmitting(true);
     
     try {
-      // Validate required files
-      if (!files.learnerPermit || !files.profilePicture || !files.paymentProof) {
+      // Validate required files only for new applications
+      if (!isEditing && (!files.learnerPermit || !files.profilePicture || !files.paymentProof)) {
         toast({
           title: "Missing Files",
           description: "Please upload all required documents before submitting.",
@@ -86,45 +111,76 @@ const ApplicationForm = () => {
         return;
       }
 
-      // Upload files
-      const [learnerPermitPath, profilePicturePath, paymentProofPath] = await Promise.all([
-        uploadFile(files.learnerPermit, 'documents', 'learner-permits'),
-        uploadFile(files.profilePicture, 'profiles', 'profile-pictures'),
-        uploadFile(files.paymentProof, 'documents', 'payment-proofs')
-      ]);
+      // Upload files if provided
+      let learnerPermitPath = existingData?.learner_permit_url;
+      let profilePicturePath = existingData?.profile_picture_url;
+      let paymentProofPath = existingData?.payment_proof_url;
 
-      // Insert student data
-      const { error: insertError } = await supabase
-        .from('students')
-        .insert({
-          user_id: user.id,
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          date_of_birth: formData.dateOfBirth,
-          address: formData.address,
-          emergency_contact: formData.emergencyContact,
-          emergency_phone: formData.emergencyPhone,
-          learner_permit_number: formData.learnerPermitNumber,
-          learner_permit_url: learnerPermitPath,
-          profile_picture_url: profilePicturePath,
-          payment_proof_url: paymentProofPath,
-          registration_fee: formData.registrationFee,
-          lesson_package: formData.lessonPackage,
-          status: 'pending'
-        });
+      if (files.learnerPermit) {
+        learnerPermitPath = await uploadFile(files.learnerPermit, 'documents', 'learner-permits');
+      }
+      if (files.profilePicture) {
+        profilePicturePath = await uploadFile(files.profilePicture, 'profiles', 'profile-pictures');
+      }
+      if (files.paymentProof) {
+        paymentProofPath = await uploadFile(files.paymentProof, 'documents', 'payment-proofs');
+      }
 
-      if (insertError) {
-        throw insertError;
+      const baseData = {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        date_of_birth: formData.dateOfBirth,
+        address: formData.address,
+        emergency_contact: formData.emergencyContact,
+        emergency_phone: formData.emergencyPhone,
+        learner_permit_number: formData.learnerPermitNumber,
+        learner_permit_url: learnerPermitPath,
+        profile_picture_url: profilePicturePath,
+        payment_proof_url: paymentProofPath,
+        registration_fee: formData.registrationFee,
+        lesson_package: formData.lessonPackage
+      };
+
+      // Insert or update student data
+      let error;
+      if (isEditing) {
+        const { error: updateError } = await supabase
+          .from('students')
+          .update({
+            ...baseData,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id);
+        error = updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from('students')
+          .insert({
+            ...baseData,
+            user_id: user.id,
+            status: 'pending'
+          });
+        error = insertError;
+      }
+
+      if (error) {
+        throw error;
       }
 
       toast({
-        title: "Application Submitted",
-        description: "Your application has been submitted successfully. We'll review it shortly.",
+        title: isEditing ? "Application Updated" : "Application Submitted",
+        description: isEditing 
+          ? "Your application has been updated successfully."
+          : "Your application has been submitted successfully. We'll review it shortly.",
       });
       
-      navigate('/student-portal');
+      if (isEditing && onBack) {
+        onBack();
+      } else {
+        navigate('/student-portal');
+      }
     } catch (error: any) {
       console.error('Submission error:', error);
       toast({
@@ -181,9 +237,21 @@ const ApplicationForm = () => {
       <main className="container py-12">
         <div className="max-w-2xl mx-auto space-y-8">
           <div className="text-center space-y-4">
-            <h1 className="text-3xl font-bold">New Student Application</h1>
+            {onBack && (
+              <div className="flex items-center justify-start mb-4">
+                <Button variant="ghost" onClick={onBack} className="flex items-center gap-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Portal
+                </Button>
+              </div>
+            )}
+            <h1 className="text-3xl font-bold">
+              {isEditing ? "Edit Application" : "New Student Application"}
+            </h1>
             <p className="text-muted-foreground">
-              Complete this form to apply for driving lessons at Unitech Driving School
+              {isEditing 
+                ? "Update your application information below"
+                : "Complete this form to apply for driving lessons at Unitech Driving School"}
             </p>
           </div>
 
@@ -319,14 +387,18 @@ const ApplicationForm = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>Learner's Permit Scan/Photo *</Label>
+                  <Label>Learner's Permit Scan/Photo {!isEditing && "*"}</Label>
                   <div 
                     className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
                     onClick={() => triggerFileInput(learnerPermitRef)}
                   >
                     <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">
-                      {files.learnerPermit ? files.learnerPermit.name : "Click to upload or drag and drop"}<br />
+                      {files.learnerPermit 
+                        ? files.learnerPermit.name 
+                        : isEditing 
+                          ? "Click to upload new file (optional)"
+                          : "Click to upload or drag and drop"}<br />
                       JPG, PNG (max 2MB)
                     </p>
                     <Input 
@@ -340,14 +412,18 @@ const ApplicationForm = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>Profile Picture *</Label>
+                  <Label>Profile Picture {!isEditing && "*"}</Label>
                   <div 
                     className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
                     onClick={() => triggerFileInput(profilePictureRef)}
                   >
                     <User className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">
-                      {files.profilePicture ? files.profilePicture.name : "Upload your profile picture"}<br />
+                      {files.profilePicture 
+                        ? files.profilePicture.name 
+                        : isEditing 
+                          ? "Click to upload new picture (optional)"
+                          : "Upload your profile picture"}<br />
                       JPG, PNG (max 2MB)
                     </p>
                     <Input 
@@ -399,14 +475,18 @@ const ApplicationForm = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>Proof of Payment *</Label>
+                  <Label>Proof of Payment {!isEditing && "*"}</Label>
                   <div 
                     className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
                     onClick={() => triggerFileInput(paymentProofRef)}
                   >
                     <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">
-                      {files.paymentProof ? files.paymentProof.name : "Upload payment receipt or screenshot"}<br />
+                      {files.paymentProof 
+                        ? files.paymentProof.name 
+                        : isEditing 
+                          ? "Click to upload new receipt (optional)"
+                          : "Upload payment receipt or screenshot"}<br />
                       JPG, PNG, PDF (max 2MB)
                     </p>
                     <Input 
@@ -423,7 +503,9 @@ const ApplicationForm = () => {
 
             <div className="flex justify-center">
               <Button type="submit" size="lg" className="w-full max-w-md" disabled={isSubmitting}>
-                {isSubmitting ? "Submitting..." : "Submit Application"}
+                {isSubmitting 
+                  ? (isEditing ? "Updating..." : "Submitting...") 
+                  : (isEditing ? "Update Application" : "Submit Application")}
               </Button>
             </div>
           </form>

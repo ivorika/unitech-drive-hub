@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Clock, XCircle, FileText, User, AlertCircle } from "lucide-react";
+import { CheckCircle, Clock, XCircle, FileText, User, AlertCircle, Edit, Phone, MapPin, Calendar, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +17,14 @@ interface StudentApplication {
   first_name: string;
   last_name: string;
   email: string;
+  phone: string;
+  date_of_birth: string;
+  address: string;
+  emergency_contact: string;
+  emergency_phone: string;
+  learner_permit_number: string;
+  registration_fee: string;
+  lesson_package: string;
   created_at: string;
   updated_at: string;
 }
@@ -28,6 +36,7 @@ const StudentPortal = () => {
   const [application, setApplication] = useState<StudentApplication | null>(null);
   const [loading, setLoading] = useState(true);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     fetchApplication();
@@ -61,6 +70,11 @@ const StudentPortal = () => {
   };
 
   const handleReapply = () => {
+    setShowApplicationForm(true);
+  };
+
+  const handleEditApplication = () => {
+    setIsEditing(true);
     setShowApplicationForm(true);
   };
 
@@ -126,7 +140,11 @@ const StudentPortal = () => {
   }
 
   if (showApplicationForm) {
-    return <ApplicationForm />;
+    return <ApplicationForm isEditing={isEditing} existingData={application} onBack={() => {
+      setShowApplicationForm(false);
+      setIsEditing(false);
+      fetchApplication();
+    }} />;
   }
 
   return (
@@ -192,14 +210,54 @@ const StudentPortal = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium">Name:</span>
-                      <p className="text-muted-foreground">{application.first_name} {application.last_name}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <span className="font-medium">Name:</span>
+                          <p className="text-muted-foreground">{application.first_name} {application.last_name}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <span className="font-medium">Phone:</span>
+                          <p className="text-muted-foreground">{application.phone || 'Not provided'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <span className="font-medium">Date of Birth:</span>
+                          <p className="text-muted-foreground">
+                            {application.date_of_birth ? new Date(application.date_of_birth).toLocaleDateString() : 'Not provided'}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <span className="font-medium">Email:</span>
-                      <p className="text-muted-foreground">{application.email}</p>
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <div>
+                          <span className="font-medium">Email:</span>
+                          <p className="text-muted-foreground">{application.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <div>
+                          <span className="font-medium">Permit #:</span>
+                          <p className="text-muted-foreground">{application.learner_permit_number || 'Not provided'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <CreditCard className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <div>
+                          <span className="font-medium">Registration:</span>
+                          <p className="text-muted-foreground">{application.registration_fee || 'Not provided'}</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   
@@ -238,11 +296,22 @@ const StudentPortal = () => {
                   )}
                   
                   {application.status === 'pending' && (
-                    <div className="text-center text-sm text-muted-foreground">
-                      <p>We'll email you once your application has been reviewed.</p>
-                      <p className="mt-1">
-                        Last updated: {new Date(application.updated_at).toLocaleDateString()}
-                      </p>
+                    <div className="space-y-3">
+                      <Button 
+                        onClick={handleEditApplication}
+                        variant="outline"
+                        size="lg"
+                        className="w-full"
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit Application
+                      </Button>
+                      <div className="text-center text-sm text-muted-foreground">
+                        <p>We'll email you once your application has been reviewed.</p>
+                        <p className="mt-1">
+                          Last updated: {new Date(application.updated_at).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
