@@ -61,7 +61,7 @@ const QuickInfo = () => {
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Everything You Need to Know</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Get started with Unitech Driving School. Here's what you need to begin your journey.
+            Get started with PNGUOT Driving School. Here's what you need to begin your journey.
           </p>
         </div>
 

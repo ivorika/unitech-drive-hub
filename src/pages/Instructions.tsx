@@ -39,7 +39,7 @@ const Instructions = () => {
                   <div>
                     <h4 className="font-medium">Valid Learner's Permit</h4>
                     <p className="text-sm text-muted-foreground">
-                      Current Ontario learner's permit with permit number and photo/scan
+                      Current learner's permit with permit number and photo
                     </p>
                   </div>
                 </div>
@@ -83,7 +83,7 @@ const Instructions = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="font-medium">Registration Fee</span>
-                    <Badge variant="secondary">$50.00</Badge>
+                    <Badge variant="secondary">K15.00</Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     One-time application processing fee
@@ -93,7 +93,7 @@ const Instructions = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="font-medium">Per Lesson Rate</span>
-                    <Badge variant="secondary">$45.00/hour</Badge>
+                    <Badge variant="secondary">K20.00/hour</Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     Standard rate for in-car driving lessons
@@ -107,16 +107,16 @@ const Instructions = () => {
                 <h4 className="font-medium mb-2">Popular Packages</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span>10-Hour Package</span>
-                    <span className="font-medium">K450.00</span>
+                    <span>9-Hour Package</span>
+                    <span className="font-medium">K180.00</span>
                   </div>
                   <div className="flex justify-between">
                     <span>15-Hour Package</span>
-                    <span className="font-medium">K675.00</span>
+                    <span className="font-medium">K300.00</span>
                   </div>
                   <div className="flex justify-between">
                     <span>18-Hour Package (Full)</span>
-                    <span className="font-medium">K810.00</span>
+                    <span className="font-medium">K360.00</span>
                   </div>
                 </div>
               </div>

@@ -26,7 +26,7 @@ const Footer = () => {
               <Car className="h-8 w-8" />
               <div>
                 <div className="font-bold text-lg">DrDriver</div>
-                <div className="text-sm opacity-80">Unitech Driving School</div>
+                <div className="text-sm opacity-80">PNGUOT Driving School</div>
               </div>
             </div>
             <p className="text-sm opacity-80 max-w-sm">
@@ -71,22 +71,22 @@ const Footer = () => {
             <div className="space-y-2 text-sm">
               <div className="flex items-center space-x-2 opacity-80">
                 <Phone className="h-4 w-4" />
-                <span>(555) 123-4567</span>
+                <span>(675) 333-2577</span>
               </div>
               <div className="flex items-center space-x-2 opacity-80">
                 <Mail className="h-4 w-4" />
-                <span>info@unitechdrive.com</span>
+                <span>info@PNGUOTdrive.com</span>
               </div>
               <div className="flex items-center space-x-2 opacity-80">
                 <MapPin className="h-4 w-4" />
-                <span>123 Union St, Your City</span>
+                <span>411 Independence Drive, East Taraka, Morobe</span>
               </div>
             </div>
           </div>
         </div>
 
         <div className="border-t border-primary-foreground/20 mt-8 pt-8 text-center text-sm opacity-80">
-          <p>&copy; 2024 Unitech Driving School. Managed by the Union Board. All rights reserved.</p>
+          <p>&copy; 2025 PNGUOT Driving School. Managed by the Union Board. All rights reserved.</p>
         </div>
       </div>
     </footer>
