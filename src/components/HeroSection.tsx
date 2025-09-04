@@ -25,7 +25,7 @@ const HeroSection = () => {
             <div className="space-y-4">
               <h1 className="text-4xl lg:text-6xl font-bold tracking-tight">
                 Welcome to{" "}
-                <span className="text-primary">Unitech</span>{" "}
+                <span className="text-primary">PNGUOT</span>{" "}
                 Driving School
               </h1>
               <p className="text-xl text-muted-foreground max-w-lg">
