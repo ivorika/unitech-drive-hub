@@ -473,11 +473,11 @@ const AdminDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="registration-fee">Registration Fee</Label>
-                  <Input id="registration-fee" placeholder="$50.00" />
+                  <Input id="registration-fee" placeholder="K50.00" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lesson-rate">Per Lesson Rate</Label>
-                  <Input id="lesson-rate" placeholder="$45.00" />
+                  <Input id="lesson-rate" placeholder="K45.00" />
                 </div>
                 <div className="space-y-2">
                   <Label>&nbsp;</Label>
