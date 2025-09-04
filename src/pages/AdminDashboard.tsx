@@ -34,7 +34,7 @@ import { useUserRole } from "@/hooks/use-user-role";
 
 const AdminDashboard = () => {
   const { role, loading: roleLoading } = useUserRole();
-  const { students, instructors, lessons, announcements, loading } = useDashboardData('admin');
+  const { students, instructors, lessons, announcements, loading, refetch } = useDashboardData('admin');
   const { toast } = useToast();
   
   const [announcementTitle, setAnnouncementTitle] = useState("");
@@ -75,6 +75,9 @@ const AdminDashboard = () => {
 
       if (error) throw error;
       
+      // Refetch data to update the UI
+      await refetch();
+      
       toast({
         title: "Student Approved",
         description: "Student has been approved and can now access the system.",
@@ -100,6 +103,9 @@ const AdminDashboard = () => {
         .eq('id', studentId);
 
       if (error) throw error;
+      
+      // Refetch data to update the UI
+      await refetch();
       
       toast({
         title: "Student Rejected",

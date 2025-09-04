@@ -52,102 +52,102 @@ export const useDashboardData = (userRole: string | null) => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!user || !userRole) {
-        setLoading(false);
-        return;
+  const fetchDashboardData = async () => {
+    if (!user || !userRole) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Fetch announcements for all users
+      const { data: announcementsData } = await supabase
+        .from('announcements')
+        .select('*')
+        .or(`audience.eq.all,audience.eq.${userRole}s`)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (announcementsData) {
+        setAnnouncements(announcementsData);
       }
 
-      try {
-        // Fetch announcements for all users
-        const { data: announcementsData } = await supabase
-          .from('announcements')
+      // Fetch role-specific data
+      if (userRole === 'student') {
+        // Get student's own data
+        const { data: studentData } = await supabase
+          .from('students')
           .select('*')
-          .or(`audience.eq.all,audience.eq.${userRole}s`)
-          .order('created_at', { ascending: false })
-          .limit(5);
+          .eq('user_id', user.id)
+          .single();
 
-        if (announcementsData) {
-          setAnnouncements(announcementsData);
-        }
+        if (studentData) {
+          setStudents([studentData]);
 
-        // Fetch role-specific data
-        if (userRole === 'student') {
-          // Get student's own data
-          const { data: studentData } = await supabase
-            .from('students')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
-
-          if (studentData) {
-            setStudents([studentData]);
-
-            // Get student's lessons with instructor info
-            const { data: lessonsData } = await supabase
-              .from('lessons')
-              .select(`
-                *,
-                instructor:instructors(*),
-                student:students(*)
-              `)
-              .eq('student_id', studentData.id)
-              .order('lesson_date', { ascending: true });
-
-            if (lessonsData) {
-              setLessons(lessonsData);
-            }
-          }
-        } else if (userRole === 'instructor') {
-          // Get instructor's own data
-          const { data: instructorData } = await supabase
-            .from('instructors')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
-
-          if (instructorData) {
-            setInstructors([instructorData]);
-
-            // Get instructor's lessons with student info
-            const { data: lessonsData } = await supabase
-              .from('lessons')
-              .select(`
-                *,
-                instructor:instructors(*),
-                student:students(*)
-              `)
-              .eq('instructor_id', instructorData.id)
-              .order('lesson_date', { ascending: true });
-
-            if (lessonsData) {
-              setLessons(lessonsData);
-            }
-          }
-        } else if (userRole === 'admin') {
-          // Get all data for admin
-          const [studentsResponse, instructorsResponse, lessonsResponse] = await Promise.all([
-            supabase.from('students').select('*').order('created_at', { ascending: false }),
-            supabase.from('instructors').select('*').order('created_at', { ascending: false }),
-            supabase.from('lessons').select(`
+          // Get student's lessons with instructor info
+          const { data: lessonsData } = await supabase
+            .from('lessons')
+            .select(`
               *,
               instructor:instructors(*),
               student:students(*)
-            `).order('lesson_date', { ascending: true })
-          ]);
+            `)
+            .eq('student_id', studentData.id)
+            .order('lesson_date', { ascending: true });
 
-          if (studentsResponse.data) setStudents(studentsResponse.data);
-          if (instructorsResponse.data) setInstructors(instructorsResponse.data);
-          if (lessonsResponse.data) setLessons(lessonsResponse.data);
+          if (lessonsData) {
+            setLessons(lessonsData);
+          }
         }
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      } else if (userRole === 'instructor') {
+        // Get instructor's own data
+        const { data: instructorData } = await supabase
+          .from('instructors')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
 
+        if (instructorData) {
+          setInstructors([instructorData]);
+
+          // Get instructor's lessons with student info
+          const { data: lessonsData } = await supabase
+            .from('lessons')
+            .select(`
+              *,
+              instructor:instructors(*),
+              student:students(*)
+            `)
+            .eq('instructor_id', instructorData.id)
+            .order('lesson_date', { ascending: true });
+
+          if (lessonsData) {
+            setLessons(lessonsData);
+          }
+        }
+      } else if (userRole === 'admin') {
+        // Get all data for admin
+        const [studentsResponse, instructorsResponse, lessonsResponse] = await Promise.all([
+          supabase.from('students').select('*').order('created_at', { ascending: false }),
+          supabase.from('instructors').select('*').order('created_at', { ascending: false }),
+          supabase.from('lessons').select(`
+            *,
+            instructor:instructors(*),
+            student:students(*)
+          `).order('lesson_date', { ascending: true })
+        ]);
+
+        if (studentsResponse.data) setStudents(studentsResponse.data);
+        if (instructorsResponse.data) setInstructors(instructorsResponse.data);
+        if (lessonsResponse.data) setLessons(lessonsResponse.data);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchDashboardData();
   }, [user, userRole]);
 
@@ -157,9 +157,6 @@ export const useDashboardData = (userRole: string | null) => {
     lessons,
     announcements,
     loading,
-    refetch: () => {
-      setLoading(true);
-      // Re-trigger useEffect by clearing and setting userRole
-    }
+    refetch: fetchDashboardData
   };
 };
