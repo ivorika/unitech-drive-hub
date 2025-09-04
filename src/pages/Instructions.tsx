@@ -108,15 +108,15 @@ const Instructions = () => {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span>10-Hour Package</span>
-                    <span className="font-medium">$450.00</span>
+                    <span className="font-medium">K450.00</span>
                   </div>
                   <div className="flex justify-between">
                     <span>15-Hour Package</span>
-                    <span className="font-medium">$675.00</span>
+                    <span className="font-medium">K675.00</span>
                   </div>
                   <div className="flex justify-between">
                     <span>18-Hour Package (Full)</span>
-                    <span className="font-medium">$810.00</span>
+                    <span className="font-medium">K810.00</span>
                   </div>
                 </div>
               </div>

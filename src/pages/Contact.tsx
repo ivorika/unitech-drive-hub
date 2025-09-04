@@ -169,9 +169,9 @@ const Contact = () => {
                     <div>
                       <h4 className="font-medium">Address</h4>
                       <p className="text-muted-foreground">
-                        123 University Avenue<br />
-                        Toronto, ON M5S 3M2<br />
-                        Canada
+                        411 Independence Drive, Lae West<br />
+                        Taraka, Morobe<br />
+                        Papua New Guinea
                       </p>
                     </div>
                   </div>
