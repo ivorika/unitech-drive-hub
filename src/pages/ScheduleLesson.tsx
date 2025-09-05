@@ -32,6 +32,8 @@ const ScheduleLesson = () => {
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [studentId, setStudentId] = useState<string | null>(null);
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   
   const [formData, setFormData] = useState({
     instructorId: "",
@@ -56,6 +58,74 @@ const ScheduleLesson = () => {
     "09:00", "10:00", "11:00", "12:00", 
     "13:00", "14:00", "15:00", "16:00", "17:00"
   ];
+
+  // Fetch available time slots when instructor and date change
+  useEffect(() => {
+    const fetchAvailableSlots = async () => {
+      if (!formData.instructorId || !selectedDate) {
+        setAvailableSlots([]);
+        setBookedSlots([]);
+        return;
+      }
+
+      try {
+        const dayOfWeek = selectedDate.getDay();
+        const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
+
+        // Get instructor's available hours for the selected day
+        const { data: availability } = await supabase
+          .from('schedule_availability')
+          .select('start_time, end_time')
+          .eq('instructor_id', formData.instructorId)
+          .eq('day_of_week', dayOfWeek)
+          .eq('is_available', true);
+
+        // Get already booked lessons for this instructor on this date
+        const { data: bookedLessons } = await supabase
+          .from('lessons')
+          .select('lesson_time, duration_minutes')
+          .eq('instructor_id', formData.instructorId)
+          .eq('lesson_date', selectedDateStr)
+          .in('status', ['scheduled', 'confirmed']);
+
+        if (availability && availability.length > 0) {
+          // Generate available time slots based on instructor's schedule
+          const startTime = availability[0].start_time;
+          const endTime = availability[0].end_time;
+          const slots = generateTimeSlots(startTime, endTime);
+          
+          // Filter out booked slots
+          const booked = bookedLessons?.map(lesson => lesson.lesson_time) || [];
+          const available = slots.filter(slot => !booked.includes(slot));
+          
+          setAvailableSlots(available);
+          setBookedSlots(booked);
+        } else {
+          setAvailableSlots([]);
+          setBookedSlots([]);
+        }
+      } catch (error) {
+        console.error('Error fetching available slots:', error);
+        setAvailableSlots([]);
+        setBookedSlots([]);
+      }
+    };
+
+    fetchAvailableSlots();
+  }, [formData.instructorId, selectedDate]);
+
+  const generateTimeSlots = (startTime: string, endTime: string) => {
+    const slots = [];
+    const start = new Date(`1970-01-01T${startTime}`);
+    const end = new Date(`1970-01-01T${endTime}`);
+    
+    while (start < end) {
+      slots.push(start.toTimeString().slice(0, 5));
+      start.setHours(start.getHours() + 1);
+    }
+    
+    return slots;
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -240,22 +310,37 @@ const ScheduleLesson = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="time">Preferred Time *</Label>
-                    <Select 
-                      value={formData.time} 
-                      onValueChange={(value) => handleInputChange('time', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select time" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {timeSlots.map((time) => (
-                          <SelectItem key={time} value={time}>
-                            {time}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="time">Available Time Slots *</Label>
+                    {!formData.instructorId || !selectedDate ? (
+                      <p className="text-sm text-muted-foreground">
+                        Please select an instructor and date first
+                      </p>
+                    ) : availableSlots.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        No available time slots for this instructor on the selected date
+                      </p>
+                    ) : (
+                      <Select 
+                        value={formData.time} 
+                        onValueChange={(value) => handleInputChange('time', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select available time" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableSlots.map((time) => (
+                            <SelectItem key={time} value={time}>
+                              {time}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    {bookedSlots.length > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Unavailable times: {bookedSlots.join(', ')}
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -327,7 +412,7 @@ const ScheduleLesson = () => {
               <Button 
                 type="submit" 
                 className="flex-1" 
-                disabled={isSubmitting || !selectedDate || !formData.instructorId || !formData.lessonType}
+                disabled={isSubmitting || !selectedDate || !formData.instructorId || !formData.lessonType || !formData.time || availableSlots.length === 0}
               >
                 {isSubmitting ? "Scheduling..." : "Schedule Lesson"}
               </Button>

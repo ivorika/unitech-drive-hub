@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { User, Calendar, Clock, MessageSquare, Bell, FileText, CheckCircle, Plus } from "lucide-react";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
+import QuickLessonBooking from "@/components/QuickLessonBooking";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -19,7 +20,8 @@ const StudentDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { role, loading: roleLoading } = useUserRole();
-  const { students, lessons, announcements, loading: dataLoading } = useDashboardData(role);
+  const { students, lessons, announcements, loading: dataLoading, refetch } = useDashboardData(role);
+  const [isQuickBookingOpen, setIsQuickBookingOpen] = useState(false);
 
   const loading = roleLoading || dataLoading;
   const student = students[0]; // Student dashboard shows their own data
@@ -48,7 +50,7 @@ const StudentDashboard = () => {
     }));
 
   const handleScheduleLesson = () => {
-    navigate('/schedule-lesson');
+    setIsQuickBookingOpen(true);
   };
 
   const [editProfileOpen, setEditProfileOpen] = useState(false);
@@ -372,6 +374,12 @@ const StudentDashboard = () => {
         userType="student"
         userData={student}
         onProfileUpdate={handleProfileUpdate}
+      />
+
+      <QuickLessonBooking
+        isOpen={isQuickBookingOpen}
+        onClose={() => setIsQuickBookingOpen(false)}
+        onSuccess={() => refetch()}
       />
       
       <Footer />
