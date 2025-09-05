@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, X, Plus } from "lucide-react";
+import { Loader2, X, Plus, Upload, User } from "lucide-react";
 
 interface EditProfileDialogProps {
   open: boolean;
@@ -25,18 +25,21 @@ interface EditProfileDialogProps {
   onProfileUpdate: () => void;
 }
 
-export const EditProfileDialog = ({ 
-  open, 
-  onOpenChange, 
-  userType, 
-  userData, 
-  onProfileUpdate 
+export const EditProfileDialog = ({
+  open,
+  onOpenChange,
+  userType,
+  userData,
+  onProfileUpdate
 }: EditProfileDialogProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<any>({});
   const [specialties, setSpecialties] = useState<string[]>([]);
   const [newSpecialty, setNewSpecialty] = useState("");
+  const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
+  const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null);
+  const profilePictureRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (userData && open) {
@@ -59,7 +62,7 @@ export const EditProfileDialog = ({
           years_of_experience: userData.years_of_experience || '',
         }),
       });
-      
+
       if (userType === 'instructor' && userData.specializations) {
         setSpecialties(userData.specializations || []);
       }
@@ -81,14 +84,90 @@ export const EditProfileDialog = ({
     setSpecialties(specialties.filter((_, i) => i !== index));
   };
 
+  const uploadFile = async (file: File, bucket: string, folder: string): Promise<string | null> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}/${folder}/${Date.now()}.${fileExt}`;
+
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, file);
+
+    if (error) {
+      throw error;
+    }
+
+    // Get the public URL for the uploaded file
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(data.path);
+
+    return publicUrl;
+  };
+
+  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select a file smaller than 2MB.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select an image file (JPG, PNG, etc.).",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setProfilePictureFile(file);
+
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setProfilePicturePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      toast({
+        title: "File selected",
+        description: `${file.name} has been selected.`,
+      });
+    }
+  };
+
+  const triggerFileInput = () => {
+    profilePictureRef.current?.click();
+  };
+
   const handleSave = async () => {
     setLoading(true);
     try {
-      const table = userType === 'student' ? 'students' : 
+      const table = userType === 'student' ? 'students' :
                    userType === 'instructor' ? 'instructors' : 'admins';
-      
+
+      let profilePicturePath = userData.profile_picture_url;
+
+      // Upload profile picture if a new file was selected
+      if (profilePictureFile) {
+        profilePicturePath = await uploadFile(profilePictureFile, 'profiles', 'profile-pictures');
+      }
+
       const updateData = {
         ...formData,
+        profile_picture_url: profilePicturePath,
         ...(userType === 'instructor' && { specializations: specialties }),
       };
 
@@ -103,7 +182,7 @@ export const EditProfileDialog = ({
         title: "Profile Updated",
         description: "Your profile has been updated successfully.",
       });
-      
+
       onProfileUpdate();
       onOpenChange(false);
     } catch (error) {
@@ -223,8 +302,8 @@ export const EditProfileDialog = ({
           {specialties.map((specialty, index) => (
             <Badge key={index} variant="secondary" className="flex items-center gap-1">
               {specialty}
-              <X 
-                className="h-3 w-3 cursor-pointer" 
+              <X
+                className="h-3 w-3 cursor-pointer"
                 onClick={() => removeSpecialty(index)}
               />
             </Badge>
@@ -256,25 +335,51 @@ export const EditProfileDialog = ({
             Update your profile information below.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           {/* Profile Picture Section */}
-          <div className="flex items-center space-x-4">
-            <Avatar className="h-20 w-20">
-              <AvatarImage 
-                src={userData.profile_picture_url || "/placeholder.svg"} 
-                alt={`${userData.first_name} ${userData.last_name}`} 
-              />
-              <AvatarFallback className="text-lg">
-                {userData.first_name?.[0]}{userData.last_name?.[0]}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="font-medium">Profile Picture</p>
-              <p className="text-sm text-muted-foreground">
-                Profile picture upload will be available soon
-              </p>
+          <div className="space-y-4">
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage
+                    src={profilePicturePreview || userData.profile_picture_url || "/placeholder.svg"}
+                    alt={`${userData.first_name} ${userData.last_name}`}
+                  />
+                  <AvatarFallback className="text-lg">
+                    {userData.first_name?.[0]}{userData.last_name?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0 hover:bg-primary hover:text-primary-foreground transition-colors"
+                  onClick={triggerFileInput}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="flex-1">
+                <Label className="font-medium">Profile Picture</Label>
+                <p className="text-sm text-muted-foreground">
+                  {profilePictureFile
+                    ? `Selected: ${profilePictureFile.name}`
+                    : "Click the plus icon to upload a new profile picture"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  JPG, PNG (max 2MB)
+                </p>
+              </div>
             </div>
+
+            <Input
+              ref={profilePictureRef}
+              type="file"
+              className="hidden"
+              accept=".jpg,.jpeg,.png"
+              onChange={handleProfilePictureChange}
+            />
           </div>
 
           {/* Basic Information */}
@@ -327,8 +432,8 @@ export const EditProfileDialog = ({
         </div>
 
         <DialogFooter>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >

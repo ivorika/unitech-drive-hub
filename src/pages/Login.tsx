@@ -50,7 +50,7 @@ const Login = () => {
       if (data.user) {
         // Check user role and redirect accordingly
         const { data: profileData, error: profileError } = await checkUserRole(data.user.id, userType);
-        
+
         if (profileError || !profileData) {
           toast({
             title: "Access denied",
@@ -69,7 +69,14 @@ const Login = () => {
         // Redirect based on role
         switch (userType) {
           case "student":
-            navigate("/student-dashboard");
+            // Check if student has an approved application
+            const studentData = profileData as any;
+            if (studentData && studentData.status === 'approved') {
+              navigate("/student-dashboard");
+            } else {
+              // Student is not approved or has no application, redirect to portal
+              navigate("/student-portal");
+            }
             break;
           case "instructor":
             navigate("/instructor-dashboard");
@@ -127,7 +134,7 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="container py-12">
         <div className="max-w-md mx-auto space-y-8">
           <div className="text-center space-y-4">
@@ -298,7 +305,7 @@ const Login = () => {
           </div>
         </div>
       </main>
-      
+
       <Footer />
     </div>
   );

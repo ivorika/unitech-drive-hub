@@ -79,7 +79,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-2 opacity-80">
                 <MapPin className="h-4 w-4" />
-                <span>411 Independence Drive, East Taraka, Morobe</span>
+                <span>Lae, 411 Independence Drive, East Taraka, Morobe</span>
               </div>
             </div>
           </div>

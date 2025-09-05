@@ -3,10 +3,13 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, LogOut, User, Car } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/use-user-role";
+import { getRoleBasedRedirect } from "@/utils/roleRedirect";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, logout } = useAuth();
+  const { role, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -21,10 +24,19 @@ const Header = () => {
       // Redirect to login page if not authenticated
       return "/login";
     }
-    
-    // This is a simplified version - in a real app, you'd check the user's role
-    // from their profile data and return the appropriate dashboard path
-    return "/student-dashboard";
+
+    // If user is on student portal page, keep them there
+    if (location.pathname === '/student-portal') {
+      return '/student-portal';
+    }
+
+    // Use role-based redirect to get the appropriate dashboard path
+    return getRoleBasedRedirect(role);
+  };
+
+  const shouldShowDashboardButton = () => {
+    // Hide dashboard button for students on the student portal page
+    return !(location.pathname === '/student-portal' && role === 'student');
   };
 
   const isActiveLink = (path: string) => {
@@ -45,26 +57,26 @@ const Header = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6">
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className={`text-sm font-medium transition-colors ${isActiveLink('/') ? 'text-primary' : 'hover:text-primary'}`}
           >
             Home
           </Link>
-          <Link 
-            to="/instructions" 
+          <Link
+            to="/instructions"
             className={`text-sm font-medium transition-colors ${isActiveLink('/instructions') ? 'text-primary' : 'hover:text-primary'}`}
           >
             Instructions
           </Link>
-          <Link 
-            to="/about" 
+          <Link
+            to="/about"
             className={`text-sm font-medium transition-colors ${isActiveLink('/about') ? 'text-primary' : 'hover:text-primary'}`}
           >
             About Us
           </Link>
-          <Link 
-            to="/contact" 
+          <Link
+            to="/contact"
             className={`text-sm font-medium transition-colors ${isActiveLink('/contact') ? 'text-primary' : 'hover:text-primary'}`}
           >
             Contact
@@ -75,12 +87,14 @@ const Header = () => {
         <div className="hidden md:flex items-center space-x-3">
           {user ? (
             <>
-              <Button variant="outline" size="sm" asChild>
-                <Link to={getDashboardPath()} className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  Dashboard
-                </Link>
-              </Button>
+              {shouldShowDashboardButton() && (
+                <Button variant="outline" size="sm" asChild>
+                  <Link to={getDashboardPath()} className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Dashboard
+                  </Link>
+                </Button>
+              )}
               <Button variant="destructive" size="sm" onClick={handleLogout} className="flex items-center gap-2">
                 <LogOut className="h-4 w-4" />
                 Logout
@@ -113,29 +127,29 @@ const Header = () => {
       {isMenuOpen && (
         <div className="md:hidden border-t bg-background">
           <nav className="container py-4 space-y-4">
-            <Link 
-              to="/" 
+            <Link
+              to="/"
               className={`block text-sm font-medium transition-colors ${isActiveLink('/') ? 'text-primary' : 'hover:text-primary'}`}
               onClick={() => setIsMenuOpen(false)}
             >
               Home
             </Link>
-            <Link 
-              to="/instructions" 
+            <Link
+              to="/instructions"
               className={`block text-sm font-medium transition-colors ${isActiveLink('/instructions') ? 'text-primary' : 'hover:text-primary'}`}
               onClick={() => setIsMenuOpen(false)}
             >
               Instructions
             </Link>
-            <Link 
-              to="/about" 
+            <Link
+              to="/about"
               className={`block text-sm font-medium transition-colors ${isActiveLink('/about') ? 'text-primary' : 'hover:text-primary'}`}
               onClick={() => setIsMenuOpen(false)}
             >
               About Us
             </Link>
-            <Link 
-              to="/contact" 
+            <Link
+              to="/contact"
               className={`block text-sm font-medium transition-colors ${isActiveLink('/contact') ? 'text-primary' : 'hover:text-primary'}`}
               onClick={() => setIsMenuOpen(false)}
             >
@@ -144,12 +158,14 @@ const Header = () => {
             <div className="flex space-x-3 pt-4">
               {user ? (
                 <>
-                  <Button variant="outline" size="sm" asChild className="flex-1">
-                    <Link to={getDashboardPath()} className="flex items-center gap-2 justify-center">
-                      <User className="h-4 w-4" />
-                      Dashboard
-                    </Link>
-                  </Button>
+                  {shouldShowDashboardButton() && (
+                    <Button variant="outline" size="sm" asChild className="flex-1">
+                      <Link to={getDashboardPath()} className="flex items-center gap-2 justify-center">
+                        <User className="h-4 w-4" />
+                        Dashboard
+                      </Link>
+                    </Button>
+                  )}
                   <Button variant="destructive" size="sm" onClick={handleLogout} className="flex-1 flex items-center gap-2 justify-center">
                     <LogOut className="h-4 w-4" />
                     Logout

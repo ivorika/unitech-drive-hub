@@ -8,15 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Users, 
-  Clock, 
-  DollarSign, 
-  FileText, 
-  UserCheck, 
-  UserX, 
-  Calendar, 
-  MessageSquare, 
+import {
+  Users,
+  Clock,
+  DollarSign,
+  FileText,
+  UserCheck,
+  UserX,
+  Calendar,
+  MessageSquare,
   Bell,
   Settings,
   TrendingUp,
@@ -36,7 +36,7 @@ const AdminDashboard = () => {
   const { role, loading: roleLoading } = useUserRole();
   const { students, instructors, lessons, announcements, loading, refetch } = useDashboardData('admin');
   const { toast } = useToast();
-  
+
   const [announcementTitle, setAnnouncementTitle] = useState("");
   const [announcementMessage, setAnnouncementMessage] = useState("");
   const [announcementAudience, setAnnouncementAudience] = useState("all");
@@ -46,8 +46,8 @@ const AdminDashboard = () => {
 
   // Get pending students
   const pendingStudents = students.filter(student => student.status === 'pending');
-  const activeStudents = students.filter(student => student.status === 'active');
-  
+  const activeStudents = students.filter(student => student.status === 'approved');
+
   // Calculate stats
   const stats = {
     totalStudents: students.length,
@@ -70,14 +70,14 @@ const AdminDashboard = () => {
     try {
       const { error } = await supabase
         .from('students')
-        .update({ status: 'active' })
+        .update({ status: 'approved' })
         .eq('id', studentId);
 
       if (error) throw error;
-      
+
       // Refetch data to update the UI
       await refetch();
-      
+
       toast({
         title: "Student Approved",
         description: "Student has been approved and can now access the system.",
@@ -103,10 +103,10 @@ const AdminDashboard = () => {
         .eq('id', studentId);
 
       if (error) throw error;
-      
+
       // Refetch data to update the UI
       await refetch();
-      
+
       toast({
         title: "Student Rejected",
         description: "Student application has been rejected.",
@@ -146,11 +146,11 @@ const AdminDashboard = () => {
         });
 
       if (error) throw error;
-      
+
       setAnnouncementTitle("");
       setAnnouncementMessage("");
       setAnnouncementAudience("all");
-      
+
       toast({
         title: "Announcement Created",
         description: "Announcement has been sent successfully.",
@@ -189,7 +189,7 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="container py-8">
         <div className="max-w-7xl mx-auto space-y-8">
           <div className="flex items-center justify-between">
@@ -290,16 +290,16 @@ const AdminDashboard = () => {
                           </div>
                         </div>
                         <div className="flex space-x-2">
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="outline"
                             onClick={() => setReviewingStudent(student)}
                           >
                             <Eye className="h-4 w-4 mr-1" />
                             Review
                           </Button>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="default"
                             onClick={() => handleApproveStudent(student.id)}
                             disabled={processing === `approve-${student.id}` || !reviewedStudents.has(student.id)}
@@ -311,8 +311,8 @@ const AdminDashboard = () => {
                             )}
                             Approve
                           </Button>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="destructive"
                             onClick={() => handleRejectStudent(student.id)}
                             disabled={processing === `reject-${student.id}`}
@@ -357,7 +357,7 @@ const AdminDashboard = () => {
                           </p>
                         </div>
                       </div>
-                      <Badge variant={student.status === "active" ? "default" : "secondary"}>
+                      <Badge variant={student.status === "approved" ? "default" : "secondary"}>
                         {student.status}
                       </Badge>
                     </div>
@@ -430,8 +430,8 @@ const AdminDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="announcement-title">Title</Label>
-                  <Input 
-                    id="announcement-title" 
+                  <Input
+                    id="announcement-title"
                     placeholder="Enter announcement title..."
                     value={announcementTitle}
                     onChange={(e) => setAnnouncementTitle(e.target.value)}
@@ -454,7 +454,7 @@ const AdminDashboard = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="announcement-message">Message</Label>
-                <Textarea 
+                <Textarea
                   id="announcement-message"
                   placeholder="Enter your announcement message..."
                   className="min-h-[100px]"
@@ -462,7 +462,7 @@ const AdminDashboard = () => {
                   onChange={(e) => setAnnouncementMessage(e.target.value)}
                 />
               </div>
-              <Button 
+              <Button
                 onClick={handleCreateAnnouncement}
                 disabled={processing === 'announcement'}
               >
@@ -506,7 +506,7 @@ const AdminDashboard = () => {
           </Card>
         </div>
       </main>
-      
+
       <Footer />
 
       {/* Student Review Dialog */}
@@ -515,9 +515,9 @@ const AdminDashboard = () => {
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle>Review Application</DialogTitle>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setReviewingStudent(null)}
               >
                 <X className="h-4 w-4" />
@@ -527,7 +527,7 @@ const AdminDashboard = () => {
               Review student application details before approval
             </DialogDescription>
           </DialogHeader>
-          
+
           {reviewingStudent && (
             <div className="space-y-6">
               <div className="flex items-center space-x-4">
@@ -567,9 +567,9 @@ const AdminDashboard = () => {
                     <div className="mt-2 space-y-2">
                       <p className="text-sm"><span className="font-medium">Permit Number:</span> {reviewingStudent.learner_permit_number || 'Not provided'}</p>
                       {reviewingStudent.learner_permit_url && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => window.open(reviewingStudent.learner_permit_url, '_blank')}
                         >
                           View Permit Document
@@ -584,9 +584,9 @@ const AdminDashboard = () => {
                       <p className="text-sm"><span className="font-medium">Registration Fee:</span> {reviewingStudent.registration_fee || 'Not provided'}</p>
                       <p className="text-sm"><span className="font-medium">Lesson Package:</span> {reviewingStudent.lesson_package || 'Not provided'}</p>
                       {reviewingStudent.payment_proof_url && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => window.open(reviewingStudent.payment_proof_url, '_blank')}
                         >
                           View Payment Proof
@@ -598,13 +598,13 @@ const AdminDashboard = () => {
               </div>
 
               <div className="flex justify-end space-x-3 pt-4 border-t">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setReviewingStudent(null)}
                 >
                   Close
                 </Button>
-                <Button 
+                <Button
                   onClick={() => {
                     setReviewedStudents(prev => new Set(prev).add(reviewingStudent.id));
                     setReviewingStudent(null);
