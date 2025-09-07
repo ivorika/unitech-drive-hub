@@ -17,7 +17,7 @@ const Instructions = () => {
           <div className="text-center space-y-4">
             <h1 className="text-3xl font-bold">Application Instructions</h1>
             <p className="text-muted-foreground">
-              Everything you need to know before applying to Unitech Driving School
+              Everything you need to know before applying to PNGUOT Driving School
             </p>
           </div>
 

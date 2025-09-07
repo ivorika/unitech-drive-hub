@@ -1,13 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { FileText, DollarSign, Clock, Phone, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 const QuickInfo = () => {
   const infoCards = [
     {
       title: "Application Requirements",
-      icon: FileText,
       items: [
         "Valid learner's permit",
         "Proof of payment",
@@ -19,7 +18,6 @@ const QuickInfo = () => {
     },
     {
       title: "Pricing & Packages",
-      icon: DollarSign,
       items: [
         "Registration fee applies",
         "Per-lesson competitive rates",
@@ -31,7 +29,6 @@ const QuickInfo = () => {
     },
     {
       title: "Learning Process",
-      icon: Clock,
       items: [
         "Professional certified instructors",
         "Progress tracking dashboard",
@@ -43,7 +40,6 @@ const QuickInfo = () => {
     },
     {
       title: "Support & Contact",
-      icon: Phone,
       items: [
         "Direct instructor messaging",
         "Admin support available",
@@ -69,12 +65,7 @@ const QuickInfo = () => {
           {infoCards.map((card) => (
             <Card key={card.title} className="h-full">
               <CardHeader>
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <card.icon className="h-5 w-5 text-primary" />
-                  </div>
-                  <CardTitle className="text-lg">{card.title}</CardTitle>
-                </div>
+                <CardTitle className="text-lg">{card.title}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <ul className="space-y-2">
