@@ -5,42 +5,124 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { User, Calendar, Clock, MessageSquare, Bell, Users, Star, FileText } from "lucide-react";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const InstructorDashboard = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [editProfileOpen, setEditProfileOpen] = useState(false);
-  
-  // Mock data - replace with real data from Supabase
-  const instructor = {
-    name: "Sarah Johnson",
-    email: "sarah.johnson@unitech.com",
-    phone: "(416) 555-0456",
-    license: "INS-789123",
-    experience: "8 years",
-    specialties: ["Highway Driving", "Defensive Driving", "Parallel Parking"],
-    profilePicture: "/placeholder.svg"
-  };
+  const [instructor, setInstructor] = useState<any>(null);
+  const [lessons, setLessons] = useState<any[]>([]);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const todayLessons = [
-    { time: "9:00 AM", student: "John Smith", type: "In-Car Lesson", duration: "1 hour", status: "upcoming" },
-    { time: "11:00 AM", student: "Emma Wilson", type: "Highway Practice", duration: "1.5 hours", status: "upcoming" },
-    { time: "2:00 PM", student: "Mike Brown", type: "Road Test Prep", duration: "1 hour", status: "completed" },
-    { time: "4:00 PM", student: "Lisa Chen", type: "Parallel Parking", duration: "1 hour", status: "upcoming" }
-  ];
+  useEffect(() => {
+    const fetchInstructorData = async () => {
+      if (!user) return;
 
-  const myStudents = [
-    { name: "John Smith", hoursCompleted: 12, totalHours: 15, nextLesson: "2024-01-15", progress: "Good", avatar: "/placeholder.svg" },
-    { name: "Emma Wilson", hoursCompleted: 8, totalHours: 18, nextLesson: "2024-01-16", progress: "Excellent", avatar: "/placeholder.svg" },
-    { name: "Mike Brown", hoursCompleted: 16, totalHours: 18, nextLesson: "2024-01-17", progress: "Ready for Test", avatar: "/placeholder.svg" },
-    { name: "Lisa Chen", hoursCompleted: 5, totalHours: 12, nextLesson: "2024-01-18", progress: "Needs Practice", avatar: "/placeholder.svg" }
-  ];
+      try {
+        // Get instructor data
+        const { data: instructorData } = await supabase
+          .from('instructors')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
 
-  const announcements = [
-    { date: "2024-01-12", title: "Schedule Update", message: "Please note the updated holiday schedule. Office closed Dec 25-26." },
-    { date: "2024-01-10", title: "Training Session", message: "Mandatory safety training scheduled for Jan 20th at 2:00 PM." }
-  ];
+        if (instructorData) {
+          setInstructor(instructorData);
+
+          // Get lessons for this instructor
+          const { data: lessonsData } = await supabase
+            .from('lessons')
+            .select(`
+              *,
+              student:students(*)
+            `)
+            .eq('instructor_id', instructorData.id)
+            .order('lesson_date', { ascending: true })
+            .order('lesson_time', { ascending: true });
+
+          if (lessonsData) {
+            setLessons(lessonsData);
+          }
+        }
+
+        // Get announcements
+        const { data: announcementsData } = await supabase
+          .from('announcements')
+          .select('*')
+          .or('audience.eq.all,audience.eq.instructors')
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (announcementsData) {
+          setAnnouncements(announcementsData);
+        }
+      } catch (error) {
+        console.error('Error fetching instructor data:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load instructor data",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInstructorData();
+  }, [user, toast]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container py-8">
+          <div className="text-center">Loading...</div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!instructor) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container py-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold">Instructor Profile Not Found</h2>
+            <p className="text-muted-foreground">Please contact the administrator to set up your instructor profile.</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Filter today's lessons
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const todayLessons = lessons.filter(lesson => lesson.lesson_date === today);
+
+  // Get all students who have lessons with this instructor
+  const myStudents = lessons.reduce((acc: any[], lesson) => {
+    if (lesson.student && !acc.find(s => s.id === lesson.student.id)) {
+      acc.push({
+        ...lesson.student,
+        lessonsCount: lessons.filter(l => l.student_id === lesson.student.id).length,
+        nextLesson: lessons
+          .filter(l => l.student_id === lesson.student.id && l.lesson_date >= today)
+          .sort((a, b) => new Date(a.lesson_date).getTime() - new Date(b.lesson_date).getTime())[0]?.lesson_date
+      });
+    }
+    return acc;
+  }, []);
 
   const handleEditProfile = () => {
     setEditProfileOpen(true);
@@ -81,30 +163,38 @@ const InstructorDashboard = () => {
                     <AvatarFallback>{instructor.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <h3 className="font-semibold">{instructor.name}</h3>
+                    <h3 className="font-semibold">{instructor.first_name} {instructor.last_name}</h3>
                     <p className="text-sm text-muted-foreground">{instructor.email}</p>
                   </div>
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>License:</span>
-                    <span>{instructor.license}</span>
+                    <span>{instructor.license_number || 'Not provided'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Experience:</span>
-                    <span>{instructor.experience}</span>
+                    <span>{instructor.years_of_experience ? `${instructor.years_of_experience} years` : 'Not provided'}</span>
                   </div>
+                  {instructor.hourly_rate && (
+                    <div className="flex justify-between">
+                      <span>Hourly Rate:</span>
+                      <span>${instructor.hourly_rate}</span>
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  <span className="text-sm font-medium">Specialties:</span>
-                  <div className="flex flex-wrap gap-1">
-                    {instructor.specialties.map((specialty, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        {specialty}
-                      </Badge>
-                    ))}
+                {instructor.specializations && instructor.specializations.length > 0 && (
+                  <div className="space-y-2">
+                    <span className="text-sm font-medium">Specialties:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {instructor.specializations.map((specialty: string, index: number) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {specialty}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
                 <Button variant="outline" size="sm" className="w-full" onClick={handleEditProfile}>
                   Edit Profile
                 </Button>
@@ -122,20 +212,26 @@ const InstructorDashboard = () => {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div className="space-y-1">
-                    <p className="text-2xl font-bold text-primary">4</p>
-                    <p className="text-xs text-muted-foreground">Total Lessons</p>
+                    <p className="text-2xl font-bold text-primary">{todayLessons.length}</p>
+                    <p className="text-xs text-muted-foreground">Today's Lessons</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-2xl font-bold text-primary">5.5</p>
-                    <p className="text-xs text-muted-foreground">Hours Scheduled</p>
+                    <p className="text-2xl font-bold text-primary">
+                      {todayLessons.reduce((total, lesson) => total + (lesson.duration_minutes / 60), 0).toFixed(1)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Hours Today</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-2xl font-bold text-green-600">1</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {todayLessons.filter(lesson => lesson.status === 'completed').length}
+                    </p>
                     <p className="text-xs text-muted-foreground">Completed</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-2xl font-bold text-amber-600">3</p>
-                    <p className="text-xs text-muted-foreground">Remaining</p>
+                    <p className="text-2xl font-bold text-amber-600">
+                      {todayLessons.filter(lesson => lesson.status === 'scheduled').length}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Upcoming</p>
                   </div>
                 </div>
               </CardContent>
@@ -178,32 +274,43 @@ const InstructorDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {todayLessons.map((lesson, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{lesson.time}</p>
-                          <Badge variant={lesson.status === "completed" ? "default" : "secondary"}>
-                            {lesson.status}
-                          </Badge>
+                  {todayLessons.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-4">No lessons scheduled for today</p>
+                  ) : (
+                    todayLessons.map((lesson, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{lesson.lesson_time}</p>
+                            <Badge variant={lesson.status === "completed" ? "default" : "secondary"}>
+                              {lesson.status}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {lesson.student ? `${lesson.student.first_name} ${lesson.student.last_name}` : 'Unknown Student'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {lesson.lesson_type} • {lesson.duration_minutes} minutes
+                          </p>
+                          {lesson.notes && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Note: {lesson.notes}
+                            </p>
+                          )}
                         </div>
-                        <p className="text-sm text-muted-foreground">{lesson.student}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {lesson.type} • {lesson.duration}
-                        </p>
+                        {lesson.status === "scheduled" && (
+                          <Button variant="outline" size="sm">
+                            Mark Complete
+                          </Button>
+                        )}
+                        {lesson.status === "completed" && (
+                          <Button variant="outline" size="sm">
+                            Add Feedback
+                          </Button>
+                        )}
                       </div>
-                      {lesson.status === "upcoming" && (
-                        <Button variant="outline" size="sm">
-                          Start Lesson
-                        </Button>
-                      )}
-                      {lesson.status === "completed" && (
-                        <Button variant="outline" size="sm">
-                          Add Feedback
-                        </Button>
-                      )}
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -218,34 +325,36 @@ const InstructorDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {myStudents.map((student, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={student.avatar} alt={student.name} />
-                          <AvatarFallback>{student.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{student.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {student.hoursCompleted}/{student.totalHours} hours
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Next: {student.nextLesson}
-                          </p>
+                  {myStudents.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-4">No students have booked lessons yet</p>
+                  ) : (
+                    myStudents.map((student, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={student.profile_picture_url} alt={`${student.first_name} ${student.last_name}`} />
+                            <AvatarFallback>{student.first_name[0]}{student.last_name[0]}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">{student.first_name} {student.last_name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {student.lessonsCount} lesson{student.lessonsCount !== 1 ? 's' : ''} scheduled
+                            </p>
+                            {student.nextLesson && (
+                              <p className="text-xs text-muted-foreground">
+                                Next: {format(new Date(student.nextLesson), 'MMM dd, yyyy')}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <Badge variant="secondary">
+                            {student.status}
+                          </Badge>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <Badge variant={
-                          student.progress === "Excellent" ? "default" :
-                          student.progress === "Ready for Test" ? "default" :
-                          student.progress === "Good" ? "secondary" : "destructive"
-                        }>
-                          {student.progress}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -303,17 +412,23 @@ const InstructorDashboard = () => {
                 Announcements
               </CardTitle>
             </CardHeader>
-            <CardContent>
+              <CardContent>
               <div className="space-y-4">
-                {announcements.map((announcement, index) => (
-                  <div key={index} className="p-4 border-l-4 border-primary bg-muted/50">
-                    <div className="flex justify-between items-start">
-                      <h4 className="font-medium">{announcement.title}</h4>
-                      <span className="text-xs text-muted-foreground">{announcement.date}</span>
+                {announcements.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-4">No announcements</p>
+                ) : (
+                  announcements.map((announcement, index) => (
+                    <div key={index} className="p-4 border-l-4 border-primary bg-muted/50">
+                      <div className="flex justify-between items-start">
+                        <h4 className="font-medium">{announcement.title}</h4>
+                        <span className="text-xs text-muted-foreground">
+                          {format(new Date(announcement.created_at), 'MMM dd, yyyy')}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">{announcement.message}</p>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">{announcement.message}</p>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
