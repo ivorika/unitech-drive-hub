@@ -34,6 +34,7 @@ const ScheduleLesson = () => {
   const [studentId, setStudentId] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [availableDates, setAvailableDates] = useState<Date[]>([]);
   
   const [formData, setFormData] = useState({
     instructorId: "",
@@ -58,6 +59,48 @@ const ScheduleLesson = () => {
     "09:00", "10:00", "11:00", "12:00", 
     "13:00", "14:00", "15:00", "16:00", "17:00"
   ];
+
+  // Fetch available dates when instructor changes
+  useEffect(() => {
+    const fetchAvailableDates = async () => {
+      if (!formData.instructorId) {
+        setAvailableDates([]);
+        return;
+      }
+
+      try {
+        // Get instructor's availability schedule
+        const { data: availability } = await supabase
+          .from('schedule_availability')
+          .select('day_of_week, start_time, end_time')
+          .eq('instructor_id', formData.instructorId)
+          .eq('is_available', true);
+
+        if (availability && availability.length > 0) {
+          // Generate available dates for the next 3 months
+          const availableDays = availability.map(a => a.day_of_week);
+          const dates = [];
+          const today = new Date();
+          const endDate = new Date();
+          endDate.setMonth(endDate.getMonth() + 3);
+
+          for (let date = new Date(today); date <= endDate; date.setDate(date.getDate() + 1)) {
+            if (availableDays.includes(date.getDay()) && date >= today) {
+              dates.push(new Date(date));
+            }
+          }
+          setAvailableDates(dates);
+        } else {
+          setAvailableDates([]);
+        }
+      } catch (error) {
+        console.error('Error fetching available dates:', error);
+        setAvailableDates([]);
+      }
+    };
+
+    fetchAvailableDates();
+  }, [formData.instructorId]);
 
   // Fetch available time slots when instructor and date change
   useEffect(() => {
@@ -357,9 +400,18 @@ const ScheduleLesson = () => {
               <CardContent>
                 <div className="space-y-2">
                   <Label>Lesson Date *</Label>
+                  {!formData.instructorId && (
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Please select an instructor first to see available dates
+                    </p>
+                  )}
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left font-normal">
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-start text-left font-normal"
+                        disabled={!formData.instructorId}
+                      >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
                       </Button>
@@ -369,8 +421,20 @@ const ScheduleLesson = () => {
                         mode="single"
                         selected={selectedDate}
                         onSelect={setSelectedDate}
-                        disabled={(date) => date < new Date()}
+                        disabled={(date) => {
+                          // Disable past dates
+                          if (date < new Date()) return true;
+                          
+                          // If no instructor selected, disable all future dates
+                          if (!formData.instructorId) return true;
+                          
+                          // Disable dates that are not in the instructor's available dates
+                          return !availableDates.some(availableDate => 
+                            availableDate.toDateString() === date.toDateString()
+                          );
+                        }}
                         initialFocus
+                        className="pointer-events-auto"
                       />
                     </PopoverContent>
                   </Popover>
