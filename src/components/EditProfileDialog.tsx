@@ -39,7 +39,7 @@ export const EditProfileDialog = ({
   const [newSpecialty, setNewSpecialty] = useState("");
   const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
   const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null);
-  const profilePictureRef = useRef<HTMLInputElement>(null);
+    const profilePictureRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (userData && open) {
@@ -111,41 +111,38 @@ export const EditProfileDialog = ({
 
   const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Validate file size (max 2MB)
-      if (file.size > 2 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Please select a file smaller than 2MB.",
-          variant: "destructive"
-        });
-        return;
-      }
+    if (!file) return;
 
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: "Invalid file type",
-          description: "Please select an image file (JPG, PNG, etc.).",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      setProfilePictureFile(file);
-
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setProfilePicturePreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
       toast({
-        title: "File selected",
-        description: `${file.name} has been selected.`,
+        title: "File too large",
+        description: "Please select a file smaller than 2MB.",
+        variant: "destructive"
       });
+      return;
     }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select an image file (JPG, PNG, etc.).",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Stage file and show preview only; actual upload occurs on Save
+    setProfilePictureFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setProfilePicturePreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+
+    toast({
+      title: "File selected",
+      description: `${file.name} has been selected. Click Save Changes to apply.`,
+    });
   };
 
   const triggerFileInput = () => {
@@ -158,18 +155,34 @@ export const EditProfileDialog = ({
       const table = userType === 'student' ? 'students' :
                    userType === 'instructor' ? 'instructors' : 'admins';
 
-      let profilePicturePath = userData.profile_picture_url;
-
-      // Upload profile picture if a new file was selected
+      // Compute profile picture URL: upload if a new file is staged; otherwise keep existing
+      let profilePictureUrl = userData.profile_picture_url || null;
       if (profilePictureFile) {
-        profilePicturePath = await uploadFile(profilePictureFile, 'profiles', 'profile-pictures');
+        profilePictureUrl = await uploadFile(profilePictureFile, 'profiles', 'profile-pictures');
       }
 
-      const updateData = {
+      // Build update payload from current form state
+      const updateData: any = {
         ...formData,
-        profile_picture_url: profilePicturePath,
+        profile_picture_url: profilePictureUrl,
         ...(userType === 'instructor' && { specializations: specialties }),
       };
+
+      // Normalize types/values to avoid DB type errors
+      Object.keys(updateData).forEach((k) => {
+        if (updateData[k] === undefined) delete updateData[k];
+      });
+      if (userType === 'instructor') {
+        updateData.hourly_rate =
+          formData.hourly_rate === '' || formData.hourly_rate === undefined || formData.hourly_rate === null
+            ? null
+            : Number(formData.hourly_rate);
+        updateData.years_of_experience =
+          formData.years_of_experience === '' || formData.years_of_experience === undefined || formData.years_of_experience === null
+            ? null
+            : Number(formData.years_of_experience);
+        updateData.license_expiry_date = formData.license_expiry_date || null;
+      }
 
       const { error } = await supabase
         .from(table)
@@ -183,13 +196,16 @@ export const EditProfileDialog = ({
         description: "Your profile has been updated successfully.",
       });
 
+      // Reset staged file after success
+      setProfilePictureFile(null);
+
       onProfileUpdate();
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating profile:', error);
       toast({
         title: "Error",
-        description: "Failed to update profile. Please try again.",
+        description: error?.message ? `Failed to update profile: ${error.message}` : "Failed to update profile. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -276,7 +292,7 @@ export const EditProfileDialog = ({
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="hourly_rate">Hourly Rate ($)</Label>
+          <Label htmlFor="hourly_rate">Hourly Rate (K)</Label>
           <Input
             id="hourly_rate"
             type="number"

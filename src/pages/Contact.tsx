@@ -190,15 +190,7 @@ const Contact = () => {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span>Monday - Friday</span>
-                      <span className="text-muted-foreground">8:00 AM - 8:00 PM</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Saturday</span>
-                      <span className="text-muted-foreground">9:00 AM - 6:00 PM</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Sunday</span>
-                      <span className="text-muted-foreground">10:00 AM - 4:00 PM</span>
+                      <span className="text-muted-foreground">8:00 AM - 4:06 PM</span>
                     </div>
                   </div>
                 </CardContent>
@@ -219,10 +211,10 @@ const Contact = () => {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Phone className="h-4 w-4 text-primary" />
-                      <span className="font-medium">(416) 555-9999</span>
+                      <span className="font-medium">(675) 79865432</span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Available 24/7 for emergency situations
+                      Available during office hours for emergency situations
                     </p>
                   </div>
                 </CardContent>
@@ -254,7 +246,7 @@ const Contact = () => {
                 <div className="space-y-3">
                   <h4 className="font-medium">What payment methods are accepted?</h4>
                   <p className="text-sm text-muted-foreground">
-                    We accept cash, debit, credit cards, and e-transfer. Payment is required before 
+                    We accept bank deposit and e-transfer. Payment is required before 
                     your first lesson.
                   </p>
                 </div>

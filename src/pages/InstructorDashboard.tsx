@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Calendar, Clock, MessageSquare, Bell, Users, Star, FileText } from "lucide-react";
+import { User, Calendar, Clock, MessageSquare, Bell, Users, Star, FileText, Loader2 } from "lucide-react";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,10 +21,12 @@ const InstructorDashboard = () => {
   const [lessons, setLessons] = useState<any[]>([]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedStudentId, setSelectedStudentId] = useState<string>("");
+  const [completingId, setCompletingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchInstructorData = async () => {
-      if (!user) return;
+      if (!user) { setLoading(false); return; }
 
       try {
         // Get instructor data
@@ -57,7 +59,7 @@ const InstructorDashboard = () => {
         const { data: announcementsData } = await supabase
           .from('announcements')
           .select('*')
-          .or('audience.cs.{all},audience.cs.{instructors}')
+          .in('audience', ['all', 'instructors'])
           .order('created_at', { ascending: false })
           .limit(5);
 
@@ -79,12 +81,57 @@ const InstructorDashboard = () => {
     fetchInstructorData();
   }, [user, toast]);
 
+  // Realtime updates for lessons affecting this instructor
+  useEffect(() => {
+    if (!instructor?.id) return;
+
+    const channel = supabase
+      .channel(`instructor-lessons-${instructor.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'lessons', filter: `instructor_id=eq.${instructor.id}` },
+        async () => {
+          // Refresh lessons on any insert/update/delete for this instructor
+          const { data: lessonsData } = await supabase
+            .from('lessons')
+            .select(`
+              *,
+              student:students(*)
+            `)
+            .eq('instructor_id', instructor.id)
+            .order('lesson_date', { ascending: true })
+            .order('lesson_time', { ascending: true });
+          if (lessonsData) setLessons(lessonsData);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [instructor?.id]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
         <main className="container py-8">
           <div className="text-center">Loading...</div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container py-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold">Access Denied</h2>
+            <p className="text-muted-foreground">You need to sign in as an instructor to view this page.</p>
+          </div>
         </main>
         <Footer />
       </div>
@@ -108,7 +155,37 @@ const InstructorDashboard = () => {
 
   // Filter today's lessons
   const today = format(new Date(), 'yyyy-MM-dd');
-  const todayLessons = lessons.filter(lesson => lesson.lesson_date === today);
+  const getDateOnly = (value: string) => {
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+    try {
+      return format(new Date(value), 'yyyy-MM-dd');
+    } catch {
+      return '';
+    }
+  };
+  const todayLessons = lessons.filter(lesson => getDateOnly(lesson.lesson_date) === today);
+
+  // Placeholder lessons for demo when no real lessons today
+  const placeholderLessons = [
+    {
+      lesson_time: "10:00",
+      status: "scheduled",
+      student: { first_name: "Joe", last_name: "Blow" },
+      lesson_type: "Basic Driving",
+      duration_minutes: 60,
+      notes: "Demo placeholder lesson",
+    },
+    {
+      lesson_time: "14:00",
+      status: "scheduled",
+      student: { first_name: "Timothy", last_name: "Green" },
+      lesson_type: "Highway Practice",
+      duration_minutes: 90,
+      notes: "Demo placeholder lesson",
+    },
+  ];
+
+  const lessonsToShow = todayLessons.length > 0 ? todayLessons : placeholderLessons;
 
   // Get all students who have lessons with this instructor
   const myStudents = lessons.reduce((acc: any[], lesson) => {
@@ -133,6 +210,31 @@ const InstructorDashboard = () => {
     window.location.reload();
   };
 
+  const handleMarkComplete = async (lesson: any) => {
+    if (!lesson?.id) {
+      toast({ title: "Demo item", description: "This is a placeholder and cannot be updated.", variant: "destructive" });
+      return;
+    }
+    setCompletingId(lesson.id);
+    try {
+      const { error } = await supabase
+        .from('lessons')
+        .update({ status: 'completed' })
+        .eq('id', lesson.id);
+      if (error) throw error;
+
+      // Optimistic update
+      setLessons(prev => prev.map(l => l.id === lesson.id ? { ...l, status: 'completed' } : l));
+      toast({ title: "Marked complete", description: "Lesson has been marked as completed." });
+    } catch (err) {
+      console.error('Mark complete error:', err);
+      toast({ title: "Error", description: "Failed to mark lesson complete.", variant: "destructive" });
+    } finally {
+      setCompletingId(null);
+    }
+  };
+
+  
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -159,8 +261,8 @@ const InstructorDashboard = () => {
               <CardContent className="space-y-4">
                 <div className="flex items-center space-x-4">
                   <Avatar className="h-16 w-16">
-                    <AvatarImage src={instructor.profilePicture} alt={instructor.name} />
-                    <AvatarFallback>{instructor.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                    <AvatarImage src={instructor.profile_picture_url || "/placeholder.svg"} alt={`${instructor.first_name} ${instructor.last_name}`} />
+                    <AvatarFallback>{`${instructor.first_name?.[0] || ''}${instructor.last_name?.[0] || ''}`}</AvatarFallback>
                   </Avatar>
                   <div>
                     <h3 className="font-semibold">{instructor.first_name} {instructor.last_name}</h3>
@@ -179,7 +281,7 @@ const InstructorDashboard = () => {
                   {instructor.hourly_rate && (
                     <div className="flex justify-between">
                       <span>Hourly Rate:</span>
-                      <span>${instructor.hourly_rate}</span>
+                      <span>K{instructor.hourly_rate}</span>
                     </div>
                   )}
                 </div>
@@ -274,10 +376,10 @@ const InstructorDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {todayLessons.length === 0 ? (
+                  {lessonsToShow.length === 0 ? (
                     <p className="text-center text-muted-foreground py-4">No lessons scheduled for today</p>
                   ) : (
-                    todayLessons.map((lesson, index) => (
+                    lessonsToShow.map((lesson, index) => (
                       <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
@@ -299,7 +401,15 @@ const InstructorDashboard = () => {
                           )}
                         </div>
                         {lesson.status === "scheduled" && (
-                          <Button variant="outline" size="sm">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleMarkComplete(lesson)}
+                            disabled={!lesson.id || completingId === lesson.id}
+                          >
+                            {completingId === lesson.id && (
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            )}
                             Mark Complete
                           </Button>
                         )}
@@ -375,12 +485,18 @@ const InstructorDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Select Student</label>
-                  <select className="w-full p-2 border rounded-md" aria-label="Select Student">
-                    <option>Select a student...</option>
-                    <option>John Smith</option>
-                    <option>Emma Wilson</option>
-                    <option>Mike Brown</option>
-                    <option>Lisa Chen</option>
+                  <select
+                    className="w-full p-2 border rounded-md"
+                    aria-label="Select Student"
+                    value={selectedStudentId}
+                    onChange={(e) => setSelectedStudentId(e.target.value)}
+                  >
+                    <option value="">Select a student...</option>
+                    {myStudents.map((student: any) => (
+                      <option key={student.id} value={student.id}>
+                        {student.first_name} {student.last_name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="space-y-2">

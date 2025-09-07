@@ -25,16 +25,31 @@ const Header = () => {
       return "/login";
     }
 
-    // If user is on student portal page, keep them there
-    if (location.pathname === '/student-portal') {
+    const path = location.pathname;
+
+    // Keep student portal if already there
+    if (path === '/student-portal') {
       return '/student-portal';
     }
 
-    // Use role-based redirect to get the appropriate dashboard path
+    // Respect current area if already on a role-specific route
+    if (path.startsWith('/instructor')) {
+      return '/instructor-dashboard';
+    }
+    if (path.startsWith('/admin')) {
+      return '/admin-dashboard';
+    }
+    if (path.startsWith('/student')) {
+      return '/student-dashboard';
+    }
+
+    // Fallback to role-based redirect
     return getRoleBasedRedirect(role);
   };
 
   const shouldShowDashboardButton = () => {
+    // Hide while role is loading to avoid misroutes
+    if (roleLoading) return false;
     // Hide dashboard button for students on the student portal page
     return !(location.pathname === '/student-portal' && role === 'student');
   };

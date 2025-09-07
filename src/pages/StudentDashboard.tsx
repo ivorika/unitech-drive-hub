@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Calendar, Clock, MessageSquare, Bell, FileText, CheckCircle, Plus } from "lucide-react";
+import { User, Calendar, Clock, MessageSquare, Bell, FileText, CheckCircle, Plus, Loader2 } from "lucide-react";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
 import QuickLessonBooking from "@/components/QuickLessonBooking";
 import { useState } from "react";
@@ -12,6 +12,10 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useDashboardData } from "@/hooks/use-dashboard-data";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +26,11 @@ const StudentDashboard = () => {
   const { role, loading: roleLoading } = useUserRole();
   const { students, lessons, announcements, loading: dataLoading, refetch } = useDashboardData(role);
   const [isQuickBookingOpen, setIsQuickBookingOpen] = useState(false);
+  const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  const [rescheduleLesson, setRescheduleLesson] = useState<any | null>(null);
+  const [newDate, setNewDate] = useState("");
+  const [newTime, setNewTime] = useState("");
+  const [savingReschedule, setSavingReschedule] = useState(false);
 
   const loading = roleLoading || dataLoading;
   const student = students[0]; // Student dashboard shows their own data
@@ -86,10 +95,51 @@ const StudentDashboard = () => {
   };
 
   const handleRescheduleLesson = (lessonId: string) => {
-    toast({
-      title: "Feature coming soon",
-      description: "Lesson rescheduling will be available soon.",
-    });
+    const lesson = lessons.find((l) => l.id === lessonId);
+    if (!lesson) {
+      toast({ title: "Error", description: "Lesson not found.", variant: "destructive" });
+      return;
+    }
+    setRescheduleLesson(lesson);
+    setNewDate(lesson.lesson_date || "");
+    setNewTime(lesson.lesson_time || "");
+    setRescheduleOpen(true);
+  };
+
+  const handleSubmitReschedule = async () => {
+    if (!rescheduleLesson) return;
+    if (!newDate || !newTime) {
+      toast({ title: "Missing info", description: "Select a new date and time.", variant: "destructive" });
+      return;
+    }
+    setSavingReschedule(true);
+    try {
+      const { error } = await supabase
+        .from('lessons')
+        .update({ lesson_date: newDate, lesson_time: newTime })
+        .eq('id', rescheduleLesson.id);
+
+      if (error) throw error;
+
+      toast({ title: "Lesson rescheduled", description: "Your lesson has been rescheduled." });
+      setRescheduleOpen(false);
+      setRescheduleLesson(null);
+      setNewDate("");
+      setNewTime("");
+      await refetch();
+    } catch (err) {
+      console.error('Reschedule error:', err);
+      toast({ title: "Error", description: "Failed to reschedule lesson. Try again.", variant: "destructive" });
+    } finally {
+      setSavingReschedule(false);
+    }
+  };
+
+  const handleCancelReschedule = () => {
+    setRescheduleOpen(false);
+    setRescheduleLesson(null);
+    setNewDate("");
+    setNewTime("");
   };
 
   if (loading) {
@@ -381,6 +431,52 @@ const StudentDashboard = () => {
         onClose={() => setIsQuickBookingOpen(false)}
         onSuccess={() => refetch()}
       />
+
+      <Dialog open={rescheduleOpen} onOpenChange={setRescheduleOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reschedule Lesson</DialogTitle>
+            <DialogDescription>
+              Choose a new date and time for your lesson.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="reschedule-date">New Date</Label>
+              <Input
+                id="reschedule-date"
+                type="date"
+                value={newDate}
+                onChange={(e) => setNewDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="reschedule-time">New Time</Label>
+              <Input
+                id="reschedule-time"
+                type="time"
+                value={newTime}
+                onChange={(e) => setNewTime(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelReschedule} disabled={savingReschedule}>
+              Cancel
+            </Button>
+            <Button onClick={handleSubmitReschedule} disabled={savingReschedule || !newDate || !newTime}>
+              {savingReschedule ? (
+                <span className="inline-flex items-center">
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </span>
+              ) : (
+                'Save'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       <Footer />
     </div>
