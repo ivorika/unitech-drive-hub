@@ -303,7 +303,7 @@ const ScheduleLesson = () => {
                     <SelectContent>
                       {instructors.map((instructor) => (
                         <SelectItem key={instructor.id} value={instructor.id}>
-                          {instructor.first_name} {instructor.last_name} - ${instructor.hourly_rate}/hr
+                          {instructor.first_name} {instructor.last_name} - K{instructor.hourly_rate}/hr
                           {instructor.specializations && instructor.specializations.length > 0 && (
                             <span className="text-sm text-muted-foreground ml-2">
                               ({instructor.specializations.join(', ')})

@@ -46,7 +46,7 @@ const Contact = () => {
           <div className="text-center space-y-4">
             <h1 className="text-3xl font-bold">Contact Us</h1>
             <p className="text-muted-foreground">
-              Get in touch with Unitech Driving School for support and information
+              Get in touch with PNGUOT Driving School for support and information
             </p>
           </div>
 
@@ -150,8 +150,8 @@ const Contact = () => {
                     <Phone className="h-5 w-5 text-primary mt-0.5" />
                     <div>
                       <h4 className="font-medium">Phone</h4>
-                      <p className="text-muted-foreground">(416) 555-0123</p>
-                      <p className="text-sm text-muted-foreground">Monday - Friday: 8:00 AM - 8:00 PM</p>
+                      <p className="text-muted-foreground">(675) 79125638</p>
+                      <p className="text-sm text-muted-foreground">Monday - Friday: 8:00 AM - 4:06 PM</p>
                     </div>
                   </div>
                   
@@ -169,8 +169,8 @@ const Contact = () => {
                     <div>
                       <h4 className="font-medium">Address</h4>
                       <p className="text-muted-foreground">
-                        411 Independence Drive, Lae West<br />
-                        Taraka, Morobe<br />
+                        Lae, 411 Independence Drive<br />
+                        East Taraka Campus, Morobe<br />
                         Papua New Guinea
                       </p>
                     </div>

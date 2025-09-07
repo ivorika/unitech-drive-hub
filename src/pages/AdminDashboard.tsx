@@ -211,7 +211,7 @@ const AdminDashboard = () => {
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center space-x-2">
-                  <Users className="h-5 w-5 text-primary" />
+              
                   <div>
                     <p className="text-sm text-muted-foreground">Total Students</p>
                     <p className="text-2xl font-bold">{stats.totalStudents}</p>
@@ -222,7 +222,6 @@ const AdminDashboard = () => {
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center space-x-2">
-                  <UserCheck className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm text-muted-foreground">Active Instructors</p>
                     <p className="text-2xl font-bold">{stats.activeInstructors}</p>
@@ -233,7 +232,6 @@ const AdminDashboard = () => {
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center space-x-2">
-                  <FileText className="h-5 w-5 text-amber-500" />
                   <div>
                     <p className="text-sm text-muted-foreground">Pending Applications</p>
                     <p className="text-2xl font-bold">{stats.pendingApplications}</p>
@@ -244,10 +242,10 @@ const AdminDashboard = () => {
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center space-x-2">
-                  <DollarSign className="h-5 w-5 text-green-600" />
+                  
                   <div>
                     <p className="text-sm text-muted-foreground">Total Revenue</p>
-                    <p className="text-2xl font-bold">${stats.totalRevenue}</p>
+                    <p className="text-2xl font-bold">K{stats.totalRevenue}</p>
                   </div>
                 </div>
               </CardContent>
@@ -480,7 +478,7 @@ const AdminDashboard = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
+                
                 Rate Management
               </CardTitle>
               <CardDescription>
@@ -491,11 +489,11 @@ const AdminDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="registration-fee">Registration Fee</Label>
-                  <Input id="registration-fee" placeholder="K50.00" />
+                  <Input id="registration-fee" placeholder="K15.00" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lesson-rate">Per Lesson Rate</Label>
-                  <Input id="lesson-rate" placeholder="K45.00" />
+                  <Input id="lesson-rate" placeholder="K20.00" />
                 </div>
                 <div className="space-y-2">
                   <Label>&nbsp;</Label>

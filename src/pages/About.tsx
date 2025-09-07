@@ -28,7 +28,7 @@ const About = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-muted-foreground">
-                Unitech Driving School has been serving the community for over 15 years, providing 
+                PNGUOT Driving School has been serving the community for over 10 years, providing 
                 comprehensive driver education and training programs. Managed by the Union Board, 
                 we maintain the highest standards of safety, professionalism, and educational excellence.
               </p>
@@ -171,8 +171,9 @@ const About = () => {
                 <div>
                   <h4 className="font-medium mb-2">Address</h4>
                   <p className="text-muted-foreground">
-                    411 Independence Drive, Lae West<br />
-                    Taraka, Morobe<br />
+                    Student & Staff Facility Center <br/>
+                    Lae, 411 Independence Drive<br />
+                    East Taraka Campus, Morobe<br />
                     Papua New Guinea
                   </p>
                 </div>
@@ -180,9 +181,7 @@ const About = () => {
                 <div>
                   <h4 className="font-medium mb-2">Operating Hours</h4>
                   <div className="space-y-1 text-muted-foreground">
-                    <p>Monday - Friday: 8:00 AM - 8:00 PM</p>
-                    <p>Saturday: 9:00 AM - 6:00 PM</p>
-                    <p>Sunday: 10:00 AM - 4:00 PM</p>
+                    <p>Monday - Friday: 8:00 AM - 4:06 PM</p>
                   </div>
                 </div>
               </div>

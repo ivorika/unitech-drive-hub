@@ -57,7 +57,7 @@ const InstructorDashboard = () => {
         const { data: announcementsData } = await supabase
           .from('announcements')
           .select('*')
-          .or('audience.eq.all,audience.eq.instructors')
+          .or('audience.cs.{all},audience.cs.{instructors}')
           .order('created_at', { ascending: false })
           .limit(5);
 
@@ -375,7 +375,7 @@ const InstructorDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Select Student</label>
-                  <select className="w-full p-2 border rounded-md">
+                  <select className="w-full p-2 border rounded-md" aria-label="Select Student">
                     <option>Select a student...</option>
                     <option>John Smith</option>
                     <option>Emma Wilson</option>
@@ -385,7 +385,7 @@ const InstructorDashboard = () => {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Performance Rating</label>
-                  <select className="w-full p-2 border rounded-md">
+                  <select className="w-full p-2 border rounded-md" aria-label="Performance Rating">
                     <option>Select rating...</option>
                     <option>Excellent</option>
                     <option>Good</option>
