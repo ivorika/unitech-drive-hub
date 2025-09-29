@@ -74,11 +74,13 @@ export const useDashboardData = (userRole: string | null) => {
       // Fetch role-specific data
       if (userRole === 'student') {
         // Get student's own data
-        const { data: studentData } = await supabase
+        const { data: studentData, error: studentError } = await supabase
           .from('students')
           .select('*')
           .eq('user_id', user.id)
           .single();
+
+        console.log('Student data fetch:', { studentData, studentError, userId: user.id, userRole });
 
         if (studentData) {
           setStudents([studentData]);
