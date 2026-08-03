@@ -43,6 +43,7 @@ const AdminDashboard = () => {
   const [processing, setProcessing] = useState<string | null>(null);
   const [reviewingStudent, setReviewingStudent] = useState<any>(null);
   const [reviewedStudents, setReviewedStudents] = useState<Set<string>>(new Set());
+  const [messagesOpen, setMessagesOpen] = useState(false);
 
   // Get pending students
   const pendingStudents = students.filter(student => student.status === 'pending');
@@ -53,7 +54,7 @@ const AdminDashboard = () => {
     totalStudents: students.length,
     activeInstructors: instructors.filter(inst => inst.status === 'active').length,
     pendingApplications: pendingStudents.length,
-    totalRevenue: 0, // Would need to calculate from payments table
+    totalRevenue: 500, // Would need to calculate from payments table
     lessonsThisWeek: lessons.filter(lesson => {
       const lessonDate = new Date(lesson.lesson_date);
       const now = new Date();
@@ -199,7 +200,7 @@ const AdminDashboard = () => {
                 <Settings className="h-4 w-4 mr-2" />
                 Settings
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => setMessagesOpen(true)}>
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Messages
               </Button>
@@ -502,8 +503,77 @@ const AdminDashboard = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Announcements */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Announcements
+              </CardTitle>
+              <CardDescription>
+                Messages and announcements visible to admins
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {announcements.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-6">No announcements</p>
+                ) : (
+                  announcements.map((announcement) => (
+                    <div key={announcement.id} className="p-4 border-l-4 border-primary bg-muted/50">
+                      <div className="flex justify-between items-start">
+                        <h4 className="font-medium">{announcement.title}</h4>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(announcement.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">{announcement.message}</p>
+                      {announcement.priority && (
+                        <Badge variant="outline" className="mt-2 text-xs">
+                          {announcement.priority}
+                        </Badge>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </main>
+
+      {/* Messages Dialog */}
+      <Dialog open={messagesOpen} onOpenChange={setMessagesOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Messages</DialogTitle>
+            <DialogDescription>Announcements and messages sent to admins</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+            {announcements.length === 0 ? (
+              <p className="text-center text-muted-foreground py-6">No messages</p>
+            ) : (
+              announcements.map((announcement) => (
+                <div key={announcement.id} className="p-4 border-l-4 border-primary bg-muted/50">
+                  <div className="flex justify-between items-start">
+                    <h4 className="font-medium">{announcement.title}</h4>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(announcement.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">{announcement.message}</p>
+                  {announcement.priority && (
+                    <Badge variant="outline" className="mt-2 text-xs">
+                      {announcement.priority}
+                    </Badge>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
 

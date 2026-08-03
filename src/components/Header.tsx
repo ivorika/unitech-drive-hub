@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LogOut, User, Car } from "lucide-react";
+import { Menu, X, LogOut, User, Car, Sun, Moon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/use-user-role";
 import { getRoleBasedRedirect } from "@/utils/roleRedirect";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const { role, loading: roleLoading } = useUserRole();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -98,8 +100,11 @@ const Header = () => {
           </Link>
         </nav>
 
-        {/* Auth Buttons */}
+        {/* Theme Toggle and Auth Buttons */}
         <div className="hidden md:flex items-center space-x-3">
+          <Button variant="ghost" size="icon" onClick={toggleTheme}>
+            {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+          </Button>
           {user ? (
             <>
               {shouldShowDashboardButton() && (
@@ -171,6 +176,9 @@ const Header = () => {
               Contact
             </Link>
             <div className="flex space-x-3 pt-4">
+              <Button variant="ghost" size="icon" onClick={toggleTheme}>
+                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+              </Button>
               {user ? (
                 <>
                   {shouldShowDashboardButton() && (

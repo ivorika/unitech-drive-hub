@@ -12,6 +12,9 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const InstructorDashboard = () => {
   const { user } = useAuth();
@@ -23,6 +26,11 @@ const InstructorDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedStudentId, setSelectedStudentId] = useState<string>("");
   const [completingId, setCompletingId] = useState<string | null>(null);
+  const [messageOpen, setMessageOpen] = useState(false);
+  const [messageSubject, setMessageSubject] = useState("");
+  const [messageBody, setMessageBody] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [messageAudience, setMessageAudience] = useState<'admins' | 'students'>('admins');
 
   useEffect(() => {
     const fetchInstructorData = async () => {
@@ -234,6 +242,37 @@ const InstructorDashboard = () => {
     }
   };
 
+  const handleSendMessage = async () => {
+    if (!messageBody.trim()) {
+      toast({ title: "Message required", description: "Please enter a message.", variant: "destructive" });
+      return;
+    }
+    setSendingMessage(true);
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth.user?.id;
+      const { error } = await supabase
+      .from('announcements')
+      .insert({
+      title: messageSubject.trim() || 'Message from Instructor',
+      message: messageBody.trim(),
+      audience: messageAudience,
+      created_by: userId,
+      priority: 'normal'
+      });
+      if (error) throw error;
+      toast({ title: "Message sent", description: "Your message has been sent to admins." });
+      setMessageSubject("");
+      setMessageBody("");
+      setMessageOpen(false);
+    } catch (err) {
+      console.error('Send message error:', err);
+      toast({ title: "Error", description: "Failed to send message.", variant: "destructive" });
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
   
   return (
     <div className="min-h-screen bg-background">
@@ -243,7 +282,7 @@ const InstructorDashboard = () => {
         <div className="max-w-7xl mx-auto space-y-8">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold">Instructor Dashboard</h1>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => setMessageOpen(true)}>
               <MessageSquare className="h-4 w-4 mr-2" />
               Messages
             </Button>
@@ -357,7 +396,7 @@ const InstructorDashboard = () => {
                   <Calendar className="h-4 w-4 mr-2" />
                   Update Schedule
                 </Button>
-                <Button className="w-full justify-start" variant="outline">
+                <Button className="w-full justify-start" variant="outline" onClick={() => { setMessageAudience('admins'); setMessageOpen(true); }}>
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Message Admin
                 </Button>
@@ -558,6 +597,60 @@ const InstructorDashboard = () => {
         userData={instructor}
         onProfileUpdate={handleProfileUpdate}
       />
+
+      <Dialog open={messageOpen} onOpenChange={setMessageOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Messages</DialogTitle>
+            <DialogDescription>Send a message and view messages addressed to instructors.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="msg-to">Send To</Label>
+                <Label htmlFor="msg-to" className="sr-only">Send To</Label>
+                <select id="msg-to" className="w-full p-2 border rounded-md" value={messageAudience} onChange={(e) => setMessageAudience(e.target.value as 'admins' | 'students')} aria-label="Send To">
+                  <option value="admins">Admin</option>
+                  <option value="students">Students</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="msg-subject">Subject</Label>
+                <Input id="msg-subject" value={messageSubject} onChange={(e) => setMessageSubject(e.target.value)} placeholder="Optional subject" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="msg-body">Message</Label>
+              <Textarea id="msg-body" value={messageBody} onChange={(e) => setMessageBody(e.target.value)} placeholder="Type your message..." className="min-h-[120px]" />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setMessageOpen(false)} disabled={sendingMessage}>Cancel</Button>
+              <Button onClick={handleSendMessage} disabled={sendingMessage || !messageBody.trim()}>
+                {sendingMessage && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Send
+              </Button>
+            </div>
+            <div className="pt-4 border-t">
+              <h4 className="font-medium mb-2">Inbox</h4>
+              <div className="space-y-3 max-h-[40vh] overflow-y-auto">
+                {announcements.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No messages</p>
+                ) : (
+                  announcements.map((a) => (
+                    <div key={a.id} className="p-3 border-l-4 border-primary bg-muted/50">
+                      <div className="flex justify-between items-start">
+                        <span className="font-medium">{a.title}</span>
+                        <span className="text-xs text-muted-foreground">{new Date(a.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">{a.message}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       
       <Footer />
     </div>
