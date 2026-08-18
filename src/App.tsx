@@ -55,6 +55,11 @@ const App = () => (
                 <StudentDashboard />
               </ProtectedRoute>
             } />
+            <Route path="/instructor-dashboard" element={
+              <ProtectedRoute allowedRoles={['instructor']}>
+                <InstructorDashboard />
+              </ProtectedRoute>
+            } />
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
             <Route path="/confirm-email" element={<ConfirmEmail />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
