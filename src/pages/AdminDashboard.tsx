@@ -28,6 +28,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
+import { AddInstructorDialog } from "@/components/AddInstructorDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useDashboardData } from "@/hooks/use-dashboard-data";
 import { useUserRole } from "@/hooks/use-user-role";
@@ -368,6 +369,47 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Instructor Management */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <UserCheck className="h-5 w-5" />
+                    Instructors
+                  </CardTitle>
+                  <CardDescription>
+                    Create instructor credentials and review your teaching team
+                  </CardDescription>
+                </div>
+                <AddInstructorDialog onCreated={refetch} />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {instructors.map((instructor: any) => (
+                  <div
+                    key={instructor.id}
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
+                    <div>
+                      <p className="font-medium">
+                        {instructor.first_name} {instructor.last_name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">{instructor.email}</p>
+                    </div>
+                    <Badge variant={instructor.status === "active" ? "default" : "secondary"}>
+                      {instructor.status ?? "active"}
+                    </Badge>
+                  </div>
+                ))}
+                {instructors.length === 0 && (
+                  <p className="text-center text-muted-foreground py-8">No instructors yet</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Instructor Schedule Overview */}
           <Card>
