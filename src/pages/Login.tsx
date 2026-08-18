@@ -48,10 +48,14 @@ const Login = () => {
       }
 
       if (data.user) {
-        // Check user role and redirect accordingly
-        const { data: profileData, error: profileError } = await checkUserRole(data.user.id, userType);
+        // Role comes from the profiles table (single source of truth)
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("user_id", data.user.id)
+          .maybeSingle();
 
-        if (profileError || !profileData) {
+        if (profileError || !profile || profile.role !== userType) {
           toast({
             title: "Access denied",
             description: `You don't have ${userType} access to this system.`,
@@ -68,16 +72,21 @@ const Login = () => {
 
         // Redirect based on role
         switch (userType) {
-          case "student":
+          case "student": {
             // Check if student has an approved application
-            const studentData = profileData as any;
-            if (studentData && studentData.status === 'approved') {
+            const { data: student } = await supabase
+              .from("students")
+              .select("status")
+              .eq("user_id", data.user.id)
+              .maybeSingle();
+
+            if (student?.status === "approved") {
               navigate("/student-dashboard");
             } else {
-              // Student is not approved or has no application, redirect to portal
               navigate("/student-portal");
             }
             break;
+          }
           case "instructor":
             navigate("/instructor-dashboard");
             break;
@@ -96,31 +105,6 @@ const Login = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const checkUserRole = async (userId: string, expectedRole: string) => {
-    switch (expectedRole) {
-      case "student":
-        return await supabase
-          .from("students")
-          .select("*")
-          .eq("user_id", userId)
-          .single();
-      case "instructor":
-        return await supabase
-          .from("instructors")
-          .select("*")
-          .eq("user_id", userId)
-          .single();
-      case "admin":
-        return await supabase
-          .from("admins")
-          .select("*")
-          .eq("user_id", userId)
-          .single();
-      default:
-        return { data: null, error: new Error("Invalid role") };
     }
   };
 
