@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ApplicationForm from "@/pages/ApplicationForm";
+import StudentAvailabilityCard from "@/components/StudentAvailabilityCard";
 
 interface StudentApplication {
   id: string;
@@ -318,6 +319,9 @@ const StudentPortal = () => {
               </CardContent>
             </Card>
           )}
+
+          {/* Weekly free times for scheduling */}
+          {application && <StudentAvailabilityCard studentId={application.id} />}
 
           {/* Information Card */}
           <Card>

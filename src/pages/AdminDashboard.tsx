@@ -29,6 +29,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
 import { AddInstructorDialog } from "@/components/AddInstructorDialog";
+import AdminScheduleLessonDialog from "@/components/AdminScheduleLessonDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useDashboardData } from "@/hooks/use-dashboard-data";
 import { useUserRole } from "@/hooks/use-user-role";
@@ -414,13 +415,32 @@ const AdminDashboard = () => {
           {/* Instructor Schedule Overview */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Instructor Schedule Overview
-              </CardTitle>
-              <CardDescription>
-                Manage and monitor instructor schedules and assignments
-              </CardDescription>
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    Instructor Schedule Overview
+                  </CardTitle>
+                  <CardDescription>
+                    Manage and monitor instructor schedules and assignments
+                  </CardDescription>
+                </div>
+                <AdminScheduleLessonDialog
+                  students={activeStudents.map((s: any) => ({
+                    id: s.id,
+                    first_name: s.first_name,
+                    last_name: s.last_name,
+                  }))}
+                  instructors={instructors
+                    .filter((i: any) => (i.status ?? 'active') === 'active')
+                    .map((i: any) => ({
+                      id: i.id,
+                      first_name: i.first_name,
+                      last_name: i.last_name,
+                    }))}
+                  onScheduled={refetch}
+                />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
