@@ -14,6 +14,8 @@ const BasicSignup = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -104,6 +106,31 @@ const BasicSignup = () => {
     });
   };
 
+  if (emailSent) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <main className="container flex-1 flex items-center justify-center py-16">
+          <Card className="w-full max-w-md text-center">
+            <CardHeader>
+              <CardTitle>Confirm your email</CardTitle>
+              <CardDescription>
+                We sent a verification link to <span className="font-medium">{formData.email}</span>.
+                Open it to verify your account, then you'll be able to continue to your dashboard.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button variant="outline" className="w-full" asChild>
+                <Link to="/login">Go to Login</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -116,6 +143,7 @@ const BasicSignup = () => {
               Sign up as a new student to start your driving school application
             </p>
           </div>
+
 
           <Card>
             <CardHeader>
