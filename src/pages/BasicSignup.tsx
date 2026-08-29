@@ -14,6 +14,8 @@ const BasicSignup = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -54,22 +56,21 @@ const BasicSignup = () => {
         throw error;
       }
 
-      // Check if email confirmation is required
-      if (data.user && !data.user.email_confirmed_at) {
+      // Email confirmation is required: the user is NOT signed in yet
+      if (data.user && !data.session) {
+        setEmailSent(true);
         toast({
           title: "Check your email",
-          description: "We've sent you a confirmation link. Please check your email and click the link to verify your account.",
+          description: "We've sent you a confirmation link. Click it to verify your account.",
         });
-        // All signups are students, redirect to student portal
-        navigate('/student-portal');
       } else {
         toast({
           title: "Account created successfully",
-          description: "You can now sign in to your account.",
+          description: "You're signed in.",
         });
-        // All signups are students, redirect to student portal
         navigate('/student-portal');
       }
+
     } catch (error: any) {
       console.error('Signup error:', error);
       
@@ -105,6 +106,31 @@ const BasicSignup = () => {
     });
   };
 
+  if (emailSent) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <main className="container flex-1 flex items-center justify-center py-16">
+          <Card className="w-full max-w-md text-center">
+            <CardHeader>
+              <CardTitle>Confirm your email</CardTitle>
+              <CardDescription>
+                We sent a verification link to <span className="font-medium">{formData.email}</span>.
+                Open it to verify your account, then you'll be able to continue to your dashboard.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button variant="outline" className="w-full" asChild>
+                <Link to="/login">Go to Login</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -117,6 +143,7 @@ const BasicSignup = () => {
               Sign up as a new student to start your driving school application
             </p>
           </div>
+
 
           <Card>
             <CardHeader>
