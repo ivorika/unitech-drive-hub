@@ -54,22 +54,21 @@ const BasicSignup = () => {
         throw error;
       }
 
-      // Check if email confirmation is required
-      if (data.user && !data.user.email_confirmed_at) {
+      // Email confirmation is required: the user is NOT signed in yet
+      if (data.user && !data.session) {
+        setEmailSent(true);
         toast({
           title: "Check your email",
-          description: "We've sent you a confirmation link. Please check your email and click the link to verify your account.",
+          description: "We've sent you a confirmation link. Click it to verify your account.",
         });
-        // All signups are students, redirect to student portal
-        navigate('/student-portal');
       } else {
         toast({
           title: "Account created successfully",
-          description: "You can now sign in to your account.",
+          description: "You're signed in.",
         });
-        // All signups are students, redirect to student portal
         navigate('/student-portal');
       }
+
     } catch (error: any) {
       console.error('Signup error:', error);
       
