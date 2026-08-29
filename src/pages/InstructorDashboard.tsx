@@ -15,6 +15,7 @@ import Footer from "@/components/Footer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { formatSessionRange } from "@/lib/scheduling";
 
 const InstructorDashboard = () => {
   const { user } = useAuth();
@@ -31,6 +32,7 @@ const InstructorDashboard = () => {
   const [messageBody, setMessageBody] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
   const [messageAudience, setMessageAudience] = useState<'admins' | 'students'>('admins');
+  const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
 
   useEffect(() => {
     const fetchInstructorData = async () => {
@@ -161,7 +163,7 @@ const InstructorDashboard = () => {
     );
   }
 
-  // Filter today's lessons
+  // Filter lessons for the selected day
   const today = format(new Date(), 'yyyy-MM-dd');
   const getDateOnly = (value: string) => {
     if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
@@ -172,28 +174,9 @@ const InstructorDashboard = () => {
     }
   };
   const todayLessons = lessons.filter(lesson => getDateOnly(lesson.lesson_date) === today);
-
-  // Placeholder lessons for demo when no real lessons today
-  const placeholderLessons = [
-    {
-      lesson_time: "10:00",
-      status: "scheduled",
-      student: { first_name: "Joe", last_name: "Blow" },
-      lesson_type: "Basic Driving",
-      duration_minutes: 60,
-      notes: "Demo placeholder lesson",
-    },
-    {
-      lesson_time: "14:00",
-      status: "scheduled",
-      student: { first_name: "Timothy", last_name: "Green" },
-      lesson_type: "Highway Practice",
-      duration_minutes: 90,
-      notes: "Demo placeholder lesson",
-    },
-  ];
-
-  const lessonsToShow = todayLessons.length > 0 ? todayLessons : placeholderLessons;
+  const lessonsToShow = lessons
+    .filter(lesson => getDateOnly(lesson.lesson_date) === selectedDate)
+    .sort((a, b) => String(a.lesson_time).localeCompare(String(b.lesson_time)));
 
   // Get all students who have lessons with this instructor
   const myStudents = lessons.reduce((acc: any[], lesson) => {
@@ -405,24 +388,45 @@ const InstructorDashboard = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Today's Schedule */}
+            {/* Day Schedule */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  Today's Schedule
-                </CardTitle>
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      Day Schedule
+                    </CardTitle>
+                    <CardDescription>
+                      Sessions assigned to you, sorted by start time
+                    </CardDescription>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="schedule-date" className="sr-only">Schedule date</Label>
+                    <Input
+                      id="schedule-date"
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value || today)}
+                      className="w-[160px]"
+                    />
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {lessonsToShow.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-4">No lessons scheduled for today</p>
+                    <p className="text-center text-muted-foreground py-4">
+                      No sessions on {format(new Date(`${selectedDate}T00:00:00`), 'EEEE, MMM dd, yyyy')}
+                    </p>
                   ) : (
                     lessonsToShow.map((lesson, index) => (
                       <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <p className="font-medium">{lesson.lesson_time}</p>
+                            <p className="font-medium">
+                              {formatSessionRange(lesson.lesson_time, lesson.duration_minutes)}
+                            </p>
                             <Badge variant={lesson.status === "completed" ? "default" : "secondary"}>
                               {lesson.status}
                             </Badge>
@@ -431,7 +435,7 @@ const InstructorDashboard = () => {
                             {lesson.student ? `${lesson.student.first_name} ${lesson.student.last_name}` : 'Unknown Student'}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {lesson.lesson_type} • {lesson.duration_minutes} minutes
+                            {lesson.lesson_type} • {lesson.duration_minutes / 60} hours
                           </p>
                           {lesson.notes && (
                             <p className="text-xs text-muted-foreground mt-1">
