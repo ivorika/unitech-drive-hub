@@ -56,6 +56,22 @@ const BasicSignup = () => {
         throw error;
       }
 
+      // Supabase returns a user with an EMPTY identities array when the email
+      // is already registered. No email is sent in that case, so tell the user.
+      const alreadyRegistered =
+        !!data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0;
+
+      if (alreadyRegistered) {
+        toast({
+          title: "Account already exists",
+          description:
+            "This email is already registered, so no new verification email was sent. Please sign in instead, or reset your password.",
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
+
       // Email confirmation is required: the user is NOT signed in yet
       if (data.user && !data.session) {
         setEmailSent(true);
@@ -71,6 +87,7 @@ const BasicSignup = () => {
         navigate('/student-portal');
       }
 
+
     } catch (error: any) {
       console.error('Signup error:', error);
       
@@ -81,12 +98,23 @@ const BasicSignup = () => {
           description: "An account with this email already exists. Please sign in instead.",
           variant: "destructive"
         });
+      } else if (
+        error.message?.toLowerCase().includes('rate limit') ||
+        error.status === 429
+      ) {
+        toast({
+          title: "Too many emails requested",
+          description:
+            "The email sending limit was reached. Please wait about an hour before trying again, then check your inbox and spam folder.",
+          variant: "destructive"
+        });
       } else if (error.message?.includes('Invalid email')) {
         toast({
           title: "Invalid email",
           description: "Please enter a valid email address.",
           variant: "destructive"
         });
+
       } else {
         toast({
           title: "Signup failed",
@@ -106,6 +134,33 @@ const BasicSignup = () => {
     });
   };
 
+  const handleResend = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: formData.email,
+        options: { emailRedirectTo: `${window.location.origin}/confirm-email` },
+      });
+      if (error) throw error;
+      toast({
+        title: "Verification email resent",
+        description: "Check your inbox (and spam folder) for the new link.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Could not resend email",
+        description:
+          error?.status === 429 || error?.message?.toLowerCase().includes("rate limit")
+            ? "Email limit reached. Please wait a while before requesting another link."
+            : error?.message || "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (emailSent) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
@@ -117,13 +172,18 @@ const BasicSignup = () => {
               <CardDescription>
                 We sent a verification link to <span className="font-medium">{formData.email}</span>.
                 Open it to verify your account, then you'll be able to continue to your dashboard.
+                If it isn't there in a few minutes, check your spam folder or resend it below.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
+              <Button className="w-full" onClick={handleResend} disabled={isLoading}>
+                {isLoading ? "Sending..." : "Resend verification email"}
+              </Button>
               <Button variant="outline" className="w-full" asChild>
                 <Link to="/login">Go to Login</Link>
               </Button>
             </CardContent>
+
           </Card>
         </main>
         <Footer />
