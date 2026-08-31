@@ -134,6 +134,33 @@ const BasicSignup = () => {
     });
   };
 
+  const handleResend = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: formData.email,
+        options: { emailRedirectTo: `${window.location.origin}/confirm-email` },
+      });
+      if (error) throw error;
+      toast({
+        title: "Verification email resent",
+        description: "Check your inbox (and spam folder) for the new link.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Could not resend email",
+        description:
+          error?.status === 429 || error?.message?.toLowerCase().includes("rate limit")
+            ? "Email limit reached. Please wait a while before requesting another link."
+            : error?.message || "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (emailSent) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
@@ -143,6 +170,7 @@ const BasicSignup = () => {
             <CardHeader>
               <CardTitle>Confirm your email</CardTitle>
               <CardDescription>
+
                 We sent a verification link to <span className="font-medium">{formData.email}</span>.
                 Open it to verify your account, then you'll be able to continue to your dashboard.
               </CardDescription>
