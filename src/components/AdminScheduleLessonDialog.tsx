@@ -45,6 +45,9 @@ const LESSON_TYPES = [
   "Road Test Preparation",
 ];
 
+const FALLBACK_WINDOW = { start: "08:00", end: "18:00" };
+
+
 const AdminScheduleLessonDialog = ({
   students,
   instructors,
@@ -105,10 +108,22 @@ const AdminScheduleLessonDialog = ({
     load();
   }, [date]);
 
-  const dayWindows = useMemo(
+  const declaredWindows = useMemo(
     () => (dayOfWeek === null ? [] : availability.filter((a) => a.day_of_week === dayOfWeek)),
     [availability, dayOfWeek],
   );
+
+  // If the student has not declared any free time for this day, fall back to
+  // standard working hours so the admin is never blocked from booking.
+  const usingFallback = declaredWindows.length === 0;
+  const dayWindows = useMemo(
+    () =>
+      usingFallback
+        ? [{ start_time: FALLBACK_WINDOW.start, end_time: FALLBACK_WINDOW.end }]
+        : declaredWindows,
+    [declaredWindows, usingFallback],
+  );
+
 
   const busy: Busy[] = useMemo(
     () =>
@@ -287,9 +302,12 @@ const AdminScheduleLessonDialog = ({
               <p className="text-sm font-medium">Student's free times</p>
               {availability.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  This student has not indicated any free times yet.
+                  This student has not indicated any free times yet — standard hours (
+                  {formatTimeLabel(FALLBACK_WINDOW.start)}–{formatTimeLabel(FALLBACK_WINDOW.end)}) are
+                  offered instead.
                 </p>
               ) : (
+
                 <div className="flex flex-wrap gap-2">
                   {availability.map((window, index) => (
                     <Badge
@@ -315,9 +333,10 @@ const AdminScheduleLessonDialog = ({
               <p className="text-sm text-muted-foreground">Checking the schedule...</p>
             ) : slots.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No free {SESSION_MINUTES / 60}-hour slot on this date — the student is not free, or
-                every window is already taken.
+                No free {SESSION_MINUTES / 60}-hour slot on this date — every window is already taken
+                for the student or the instructor.
               </p>
+
             ) : (
               <div className="flex flex-wrap gap-2">
                 {slots.map((slot) => (
