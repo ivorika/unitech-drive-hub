@@ -98,12 +98,23 @@ const BasicSignup = () => {
           description: "An account with this email already exists. Please sign in instead.",
           variant: "destructive"
         });
+      } else if (
+        error.message?.toLowerCase().includes('rate limit') ||
+        error.status === 429
+      ) {
+        toast({
+          title: "Too many emails requested",
+          description:
+            "The email sending limit was reached. Please wait about an hour before trying again, then check your inbox and spam folder.",
+          variant: "destructive"
+        });
       } else if (error.message?.includes('Invalid email')) {
         toast({
           title: "Invalid email",
           description: "Please enter a valid email address.",
           variant: "destructive"
         });
+
       } else {
         toast({
           title: "Signup failed",
