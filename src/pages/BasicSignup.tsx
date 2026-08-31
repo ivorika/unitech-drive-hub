@@ -170,16 +170,20 @@ const BasicSignup = () => {
             <CardHeader>
               <CardTitle>Confirm your email</CardTitle>
               <CardDescription>
-
                 We sent a verification link to <span className="font-medium">{formData.email}</span>.
                 Open it to verify your account, then you'll be able to continue to your dashboard.
+                If it isn't there in a few minutes, check your spam folder or resend it below.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
+              <Button className="w-full" onClick={handleResend} disabled={isLoading}>
+                {isLoading ? "Sending..." : "Resend verification email"}
+              </Button>
               <Button variant="outline" className="w-full" asChild>
                 <Link to="/login">Go to Login</Link>
               </Button>
             </CardContent>
+
           </Card>
         </main>
         <Footer />
