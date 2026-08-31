@@ -302,9 +302,12 @@ const AdminScheduleLessonDialog = ({
               <p className="text-sm font-medium">Student's free times</p>
               {availability.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  This student has not indicated any free times yet.
+                  This student has not indicated any free times yet — standard hours (
+                  {formatTimeLabel(FALLBACK_WINDOW.start)}–{formatTimeLabel(FALLBACK_WINDOW.end)}) are
+                  offered instead.
                 </p>
               ) : (
+
                 <div className="flex flex-wrap gap-2">
                   {availability.map((window, index) => (
                     <Badge
@@ -330,9 +333,10 @@ const AdminScheduleLessonDialog = ({
               <p className="text-sm text-muted-foreground">Checking the schedule...</p>
             ) : slots.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No free {SESSION_MINUTES / 60}-hour slot on this date — the student is not free, or
-                every window is already taken.
+                No free {SESSION_MINUTES / 60}-hour slot on this date — every window is already taken
+                for the student or the instructor.
               </p>
+
             ) : (
               <div className="flex flex-wrap gap-2">
                 {slots.map((slot) => (
