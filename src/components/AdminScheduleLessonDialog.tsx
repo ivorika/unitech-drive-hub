@@ -45,6 +45,9 @@ const LESSON_TYPES = [
   "Road Test Preparation",
 ];
 
+const FALLBACK_WINDOW = { start: "08:00", end: "18:00" };
+
+
 const AdminScheduleLessonDialog = ({
   students,
   instructors,
@@ -105,10 +108,22 @@ const AdminScheduleLessonDialog = ({
     load();
   }, [date]);
 
-  const dayWindows = useMemo(
+  const declaredWindows = useMemo(
     () => (dayOfWeek === null ? [] : availability.filter((a) => a.day_of_week === dayOfWeek)),
     [availability, dayOfWeek],
   );
+
+  // If the student has not declared any free time for this day, fall back to
+  // standard working hours so the admin is never blocked from booking.
+  const usingFallback = declaredWindows.length === 0;
+  const dayWindows = useMemo(
+    () =>
+      usingFallback
+        ? [{ start_time: FALLBACK_WINDOW.start, end_time: FALLBACK_WINDOW.end }]
+        : declaredWindows,
+    [declaredWindows, usingFallback],
+  );
+
 
   const busy: Busy[] = useMemo(
     () =>
