@@ -56,6 +56,22 @@ const BasicSignup = () => {
         throw error;
       }
 
+      // Supabase returns a user with an EMPTY identities array when the email
+      // is already registered. No email is sent in that case, so tell the user.
+      const alreadyRegistered =
+        !!data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0;
+
+      if (alreadyRegistered) {
+        toast({
+          title: "Account already exists",
+          description:
+            "This email is already registered, so no new verification email was sent. Please sign in instead, or reset your password.",
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
+
       // Email confirmation is required: the user is NOT signed in yet
       if (data.user && !data.session) {
         setEmailSent(true);
@@ -70,6 +86,7 @@ const BasicSignup = () => {
         });
         navigate('/student-portal');
       }
+
 
     } catch (error: any) {
       console.error('Signup error:', error);
