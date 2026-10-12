@@ -1,0 +1,1 @@
+REVOKE ALL ON public.traffic_rule_progress FROM anon;
