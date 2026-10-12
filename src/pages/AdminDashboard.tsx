@@ -30,6 +30,7 @@ import Footer from "@/components/Footer";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
 import { AddInstructorDialog } from "@/components/AddInstructorDialog";
 import AdminScheduleLessonDialog from "@/components/AdminScheduleLessonDialog";
+import StudentProgressCard from "@/components/StudentProgressCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useDashboardData } from "@/hooks/use-dashboard-data";
 import { useUserRole } from "@/hooks/use-user-role";
@@ -208,6 +209,11 @@ const AdminDashboard = () => {
               </Button>
             </div>
           </div>
+
+          <StudentProgressCard
+            title="All Students' Progress"
+            students={(students || []).filter((s: any) => s.status === 'approved')}
+          />
 
           {/* Stats Overview */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
