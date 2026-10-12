@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatSessionRange } from "@/lib/scheduling";
+import StudentProgressCard from "@/components/StudentProgressCard";
 
 const InstructorDashboard = () => {
   const { user } = useAuth();
@@ -270,6 +271,12 @@ const InstructorDashboard = () => {
               Messages
             </Button>
           </div>
+
+          <StudentProgressCard
+            title="My Students' Progress"
+            instructorId={instructor.id}
+            students={Array.from(new Map(lessons.filter((l: any) => l.student).map((l: any) => [l.student.id, l.student])).values()) as any}
+          />
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Profile Section */}
