@@ -110,7 +110,7 @@ const StudentPortal = () => {
   const getStatusMessage = (status: string) => {
     switch (status) {
       case 'approved':
-        return "Congratulations! Your application has been approved. You can now proceed to log in and access your student dashboard.";
+        return "Congratulations! Your application has been approved. Click below to open your student dashboard.";
       case 'rejected':
         return "Unfortunately, your application was not approved at this time. You may reapply with updated information.";
       case 'pending':
@@ -278,7 +278,7 @@ const StudentPortal = () => {
                       size="lg"
                       className="w-full"
                     >
-                      Continue to Login
+                      Go to Student Dashboard
                     </Button>
                   )}
                   
@@ -288,7 +288,7 @@ const StudentPortal = () => {
                       size="lg"
                       className="w-full"
                     >
-                      Submit New Application
+                      Apply Again
                     </Button>
                   )}
                   
