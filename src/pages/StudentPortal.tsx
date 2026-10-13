@@ -80,11 +80,7 @@ const StudentPortal = () => {
   };
 
   const handleProceedToLogin = () => {
-    toast({
-      title: "Welcome!",
-      description: "You can now log in as an approved student.",
-    });
-    navigate('/login');
+    navigate('/student-dashboard');
   };
 
   const getStatusIcon = (status: string) => {

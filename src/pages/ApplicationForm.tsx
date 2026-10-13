@@ -145,11 +145,12 @@ const ApplicationForm = ({ isEditing = false, existingData, onBack }: Applicatio
 
       // Insert or update student data
       let error;
-      if (isEditing) {
+      if (isEditing || existingData) {
         const { error: updateError } = await supabase
           .from('students')
           .update({
             ...baseData,
+            ...(existingData?.status === 'rejected' ? { status: 'pending' } : {}),
             updated_at: new Date().toISOString()
           })
           .eq('user_id', user.id);
@@ -176,7 +177,7 @@ const ApplicationForm = ({ isEditing = false, existingData, onBack }: Applicatio
           : "Your application has been submitted successfully. We'll review it shortly.",
       });
       
-      if (isEditing && onBack) {
+      if (onBack) {
         onBack();
       } else {
         navigate('/student-portal');
