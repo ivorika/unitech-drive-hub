@@ -558,7 +558,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_instructor_student_ids: {
+        Args: { instructor_uid: string }
+        Returns: string[]
+      }
     }
     Enums: {
       [_ in never]: never
