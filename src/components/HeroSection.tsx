@@ -25,7 +25,7 @@ const HeroSection = () => {
               <h1 className="text-5xl lg:text-7xl font-bold tracking-tight">
                 Welcome to{" "}
                 <span className="text-primary">PNGUOT</span>{" "}
-                Driving School
+                Driving School and Learning Management System
               </h1>
               <p className="text-2xl text-muted-foreground max-w-full">
                 Professional driving instruction managed by the Union Board.
