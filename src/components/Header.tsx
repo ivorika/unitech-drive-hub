@@ -67,7 +67,7 @@ const Header = () => {
         <Link to="/" className="flex items-center space-x-2">
           <Car className="h-8 w-8 text-primary" />
           <div className="flex flex-col">
-            <span className="font-bold text-lg text-primary">DrDriver</span>
+            <span className="font-bold text-base sm:text-lg text-primary leading-tight">PNGUOT Driving School and Learning Management System</span>
             <span className="text-xs text-muted-foreground">Unitech Driving School</span>
           </div>
         </Link>
