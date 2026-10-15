@@ -237,7 +237,6 @@ const StudentDashboard = () => {
               Messages
             </Button>
           </div>
-          <TrafficRulesCard studentId={student.id} />
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Profile Section */}
             <Card>
@@ -417,6 +416,8 @@ const StudentDashboard = () => {
               </CardContent>
             </Card>
           </div>
+
+          <TrafficRulesCard studentId={student.id} />
 
           {/* Announcements */}
           <Card>
